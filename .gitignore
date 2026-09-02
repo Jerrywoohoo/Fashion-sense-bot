@@ -1,0 +1,24 @@
+# Environments & Secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+ENV/
+.gemini/
+
+# Python Cache & Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local Data Storage & User Photos (Included for private demo evaluation)
+# To ignore in production, uncomment the lines below:
+# data/*.db
+# data/images/*
+
+
+# Operating System
+.DS_Store
+Thumbs.db
