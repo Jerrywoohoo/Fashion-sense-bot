@@ -711,7 +711,8 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 for item_id, candidates in duplicates.items() if candidates
             }
             if capture_id and context.user_data is not None:
-                context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {})[capture_id] = duplicate_links
+                context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {})[capture_id] = duplicate_links.copy()
+                context.user_data.setdefault("detected_duplicates", {})[capture_id] = duplicate_links.copy()
 
             if any(candidates for candidates in duplicates.values()):
                 await _send_duplicate_comparison_photos(message, context, duplicates)
@@ -720,7 +721,13 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
                 f"✅ Updated details for `{pending_item_id}`!\n\n"
                 + _format_extraction_summary(all_item_ids, all_extracted, duplicates),
                 parse_mode=ParseMode.MARKDOWN,
-                reply_markup=_verification_keyboard(capture_id or "", bool(duplicate_links), all_item_ids),
+                reply_markup=_verification_keyboard(
+                    capture_id or "",
+                    bool(duplicate_links),
+                    all_item_ids,
+                    detected_links=duplicate_links,
+                    active_links=duplicate_links.copy(),
+                ),
             )
             return
         except CredentialsNotConfiguredError:
@@ -788,7 +795,9 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             item_id: candidates[0]["item_id"]
             for item_id, candidates in duplicates.items() if candidates
         }
-        context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {})[capture_id] = duplicate_links
+        if context.user_data is not None:
+            context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {})[capture_id] = duplicate_links.copy()
+            context.user_data.setdefault("detected_duplicates", {})[capture_id] = duplicate_links.copy()
 
         if any(candidates for candidates in duplicates.values()):
             await _send_duplicate_comparison_photos(message, context, duplicates)
@@ -797,15 +806,23 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "✅ I updated the extraction based on your note.\n\n"
             + _format_extraction_summary(item_ids, refined, duplicates),
             parse_mode=ParseMode.MARKDOWN,
-            reply_markup=_verification_keyboard(capture_id, bool(duplicate_links), item_ids),
+            reply_markup=_verification_keyboard(
+                capture_id,
+                bool(duplicate_links),
+                item_ids,
+                detected_links=duplicate_links,
+                active_links=duplicate_links.copy(),
+            ),
         )
         return
 
     # Handle OOTD Occasion Learning:
     if context.user_data is not None and "pending_ootd_combo" in context.user_data:
         item_ids = context.user_data.pop("pending_ootd_combo")
+        is_pool = bool(context.user_data.get(_POOL_MODE_KEY)) if context.user_data else False
+        target_user_id = POOL_USER_ID if is_pool else str(user.id)
         occasion_text = message.text.strip()
-        save_user_outfit(str(user.id), occasion_text, item_ids)
+        save_user_outfit(target_user_id, occasion_text, item_ids)
         formatted_ids = ", ".join(f"`{i}`" for i in item_ids)
         safe_occ = escape_markdown(occasion_text, version=1)
         await message.reply_text(
@@ -1062,15 +1079,47 @@ def _verification_keyboard(
     capture_id: str,
     has_duplicates: bool,
     item_ids: list[str] | int,
+    detected_links: Optional[dict[str, str]] = None,
+    active_links: Optional[dict[str, str]] = None,
 ) -> InlineKeyboardMarkup:
     rows: list[list[InlineKeyboardButton]] = []
     items: list[str] = item_ids if isinstance(item_ids, list) else [f"item_{i}" for i in range(item_ids)]
     count = len(items)
 
-    if has_duplicates:
+    det = detected_links or {}
+    act = active_links if active_links is not None else det
+
+    if det:
+        if len(det) == 1:
+            i_id, saved_id = next(iter(det.items()))
+            if i_id in act:
+                rows.append([
+                    InlineKeyboardButton(f"🔗 Link {i_id} → {saved_id}", callback_data=f"confirm_apply_{capture_id}"),
+                    InlineKeyboardButton("➕ Keep as New", callback_data=f"confirm_{capture_id}"),
+                ])
+            else:
+                rows.append([
+                    InlineKeyboardButton(f"➕ Keep {i_id} as New", callback_data=f"confirm_{capture_id}"),
+                    InlineKeyboardButton(f"🔗 Link {i_id} → {saved_id}", callback_data=f"confirm_apply_{capture_id}"),
+                ])
+            rows.append([InlineKeyboardButton("✅ Confirm All", callback_data=f"confirm_apply_{capture_id}")])
+        else:
+            # Multiple duplicate candidates across the upload/OOTD
+            for i_id, saved_id in det.items():
+                if i_id in act:
+                    btn_text = f"✅ 🔗 Link {i_id} → {saved_id} (Tap to keep new)"
+                else:
+                    btn_text = f"➕ {i_id}: Keep as New (Tap to link)"
+                rows.append([InlineKeyboardButton(btn_text, callback_data=f"confirm_toggle_{i_id}_{capture_id}")])
+
+            rows.append([
+                InlineKeyboardButton("✅ Confirm Selections", callback_data=f"confirm_apply_{capture_id}"),
+                InlineKeyboardButton("➕ Keep All as New", callback_data=f"confirm_{capture_id}"),
+            ])
+    elif has_duplicates:
         rows.append(
             [
-                InlineKeyboardButton("🔗 Link Duplicates", callback_data=f"confirm_link_{capture_id}"),
+                InlineKeyboardButton("🔗 Link Duplicates", callback_data=f"confirm_apply_{capture_id}"),
                 InlineKeyboardButton("➕ Keep as New", callback_data=f"confirm_{capture_id}"),
             ]
         )
@@ -1420,7 +1469,8 @@ async def _delayed_process_photo_batch(
     }
 
     if context.user_data is not None:
-        context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {})[capture_id] = duplicate_links
+        context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {})[capture_id] = duplicate_links.copy()
+        context.user_data.setdefault("detected_duplicates", {})[capture_id] = duplicate_links.copy()
 
     # Send preview photos for any detected duplicates (grouped by image path to avoid duplicates!)
     if any(candidates for candidates in duplicates.values()):
@@ -1438,7 +1488,13 @@ async def _delayed_process_photo_batch(
     await status_message.edit_text(
         _format_extraction_summary(item_ids, combined_extraction, duplicates),
         parse_mode=ParseMode.MARKDOWN,
-        reply_markup=_verification_keyboard(capture_id, bool(duplicate_links), item_ids),
+        reply_markup=_verification_keyboard(
+            capture_id,
+            bool(duplicate_links),
+            item_ids,
+            detected_links=duplicate_links,
+            active_links=duplicate_links.copy(),
+        ),
     )
 
 
@@ -1960,53 +2016,106 @@ async def verification_callback_handler(
             await query.message.reply_text("⚠️ Could not link to that item.")
         return
 
+    # Toggle individual duplicate item link status
+    if query.data.startswith("confirm_toggle_"):
+        remainder = query.data.removeprefix("confirm_toggle_")
+        if "_cap_" in remainder:
+            item_id, cap_tail = remainder.split("_cap_", 1)
+            capture_id = f"cap_{cap_tail}"
+        else:
+            item_id, capture_id = remainder.rsplit("_", 1)
+
+        stored_det = context.user_data.setdefault("detected_duplicates", {}).get(capture_id, {})
+        active_links = context.user_data.setdefault(_DUPLICATE_LINKS_KEY, {}).setdefault(capture_id, stored_det.copy())
+
+        if item_id in active_links:
+            active_links.pop(item_id, None)
+        else:
+            if item_id in stored_det:
+                active_links[item_id] = stored_det[item_id]
+
+        garments = _capture_owned_by(capture_id, user_id, allowed_user_ids=allowed_user_ids)
+        all_item_ids = [g["item_id"] for g in garments] if garments else []
+        keyboard = _verification_keyboard(
+            capture_id,
+            has_duplicates=bool(stored_det),
+            item_ids=all_item_ids,
+            detected_links=stored_det,
+            active_links=active_links,
+        )
+        await query.edit_message_reply_markup(reply_markup=keyboard)
+        return
+
     # D. Confirming an upload where duplicates were detected and linked
-    if query.data.startswith("confirm_link_cap_"):
-        capture_id = query.data.removeprefix("confirm_link_")
+    if query.data.startswith("confirm_apply_cap_") or query.data.startswith("confirm_link_cap_"):
+        capture_id = (
+            query.data.removeprefix("confirm_apply_")
+            if query.data.startswith("confirm_apply_")
+            else query.data.removeprefix("confirm_link_")
+        )
         garments = _capture_owned_by(capture_id, user_id, allowed_user_ids=allowed_user_ids)
         if not garments:
             await query.edit_message_text("This pending capture is no longer available.")
             return
 
         target_uid = garments[0]["user_id"]
-        links = await _duplicate_links_for_capture(context, capture_id, target_uid, garments)
+        links = context.user_data.get(_DUPLICATE_LINKS_KEY, {}).get(capture_id)
+        if links is None:
+            links = await _duplicate_links_for_capture(context, capture_id, target_uid, garments)
+
         linked_count = 0
+        final_item_ids: list[str] = []
         for garment in garments:
-            existing_item_id = links.get(garment["item_id"])
+            i_id = garment["item_id"]
+            existing_item_id = links.get(i_id)
             if existing_item_id:
                 try:
                     link_garment_to_existing(
-                        garment["item_id"],
+                        i_id,
                         existing_item_id,
                         target_uid,
                         garment["image_path"],
                         garment.get("user_caption"),
                     )
                     linked_count += 1
+                    final_item_ids.append(existing_item_id)
                 except ValueError:
-                    logger.warning("Could not link duplicate %s", garment["item_id"])
+                    logger.warning("Could not link duplicate %s", i_id)
+                    final_item_ids.append(i_id)
+            else:
+                final_item_ids.append(i_id)
 
         confirm_capture(capture_id)
         _clear_duplicate_links(context, capture_id)
+        if context.user_data is not None:
+            context.user_data.get("detected_duplicates", {}).pop(capture_id, None)
 
         # Check if the confirmed photo was an OOTD
         is_ootd = any(g.get("source_type") == "ootd" for g in garments)
         if is_ootd and context.user_data is not None:
-            context.user_data["pending_ootd_combo"] = [
-                links.get(g["item_id"], g["item_id"]) for g in garments
-            ]
-            await query.edit_message_text(
+            context.user_data["pending_ootd_combo"] = final_item_ids
+            msg = (
                 f"✅ Linked {linked_count} duplicate item(s); remaining items added to your wardrobe!\n\n"
-                "✨ *What occasion did you wear this outfit for?*\n"
-                "(e.g. `football practice`, `weekend coffee date`, `smart casual office`)\n\n"
-                "_Reply with the occasion and I'll remember it as your preferred style!_",
+                if linked_count > 0
+                else f"✅ {len(garments)} item(s) confirmed and added to your wardrobe!\n\n"
+            )
+            await query.edit_message_text(
+                msg
+                + "✨ *What occasion did you wear this outfit for?*\n"
+                + "(e.g. `football practice`, `weekend coffee date`, `smart casual office`)\n\n"
+                + "_Reply with the occasion and I'll remember it as your preferred style!_",
                 parse_mode=ParseMode.MARKDOWN,
             )
             return
 
-        await query.edit_message_text(
-            f"✅ Linked {linked_count} duplicate item(s); remaining items were added to your wardrobe."
-        )
+        if linked_count > 0:
+            await query.edit_message_text(
+                f"✅ Linked {linked_count} duplicate item(s); remaining items were added to your wardrobe."
+            )
+        else:
+            await query.edit_message_text(
+                f"✅ {len(garments)} item(s) confirmed and added to your wardrobe!"
+            )
         return
 
     # E. Confirming an upload normally (all items kept as new)

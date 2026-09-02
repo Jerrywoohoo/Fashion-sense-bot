@@ -595,6 +595,7 @@ def save_user_outfit(
 ) -> int:
     """Save an OOTD combo as a preferred user outfit demonstration."""
     with _connect() as conn:
+        _ensure_user_exists(conn, user_id)
         cursor = conn.execute(
             """
             INSERT INTO user_outfits (user_id, occasion, item_ids, aesthetic)
@@ -644,6 +645,7 @@ def log_outfit_wear(
 ) -> int:
     """Log an outfit wear or interaction into wear_history."""
     with _connect() as conn:
+        _ensure_user_exists(conn, user_id)
         cursor = conn.execute(
             """
             INSERT INTO wear_history (user_id, item_ids, occasion, action)

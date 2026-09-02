@@ -178,11 +178,25 @@ class TestBatchAndWardrobe(unittest.TestCase):
             _format_item_title("crewneck tee", "navy", None),
             "navy crewneck tee",
         )
-        # Long detailed description capped to 4 words for clean UI
         self.assertEqual(
             _format_item_title("oversized dropped shoulder heavyweight hoodie", "washed charcoal", "Fear of God"),
             "Fear of God washed",
         )
+
+    def test_save_user_outfit_and_wear_fk_auto_satisfaction(self):
+        from app.database import get_user_outfits, log_outfit_wear, save_user_outfit
+
+        # Testing with a fresh new user ID that doesn't have a profile yet
+        fresh_user_id = "user_brand_new_999"
+        outfit_id = save_user_outfit(fresh_user_id, "smart casual party", ["item_101", "item_102"])
+        self.assertGreater(outfit_id, 0)
+
+        saved = get_user_outfits(fresh_user_id, occasion_keyword="party")
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(saved[0]["item_ids"], ["item_101", "item_102"])
+
+        log_id = log_outfit_wear(fresh_user_id, ["item_101", "item_102"], "party", action="worn")
+        self.assertGreater(log_id, 0)
 
 
 if __name__ == "__main__":
