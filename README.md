@@ -7,61 +7,36 @@
 
 ## 🧑‍⚖️ Execution & Judge Evaluation Guide
 
-To evaluate the solution immediately without spending time photographing and uploading 10+ garments, the bot includes a pre-seeded **Admin Test Pool Mode** with clean, pre-categorized clothing items.
-
-### ⚡ Quick Start: Zero-Friction Judge Mode
-1. Open the bot on Telegram and start the conversation with `/start`.
-2. Send **`/admintest`** to enter Judge Mode.
-3. When prompted, enter the demo password:
-   ```text
-   demo123
-   ```
-4. You are now in **Shared Pool Mode** (`POOL_TEST_USER`):
-   - Type **`/wardrobe`** to inspect the pre-seeded digital wardrobe across Tops, Bottoms, Outerwear, Footwear, and Accessories.
-   - Type **`/style dinner date in Tokyo`** or **`/style rainy office day in London`** to test the live Weather RAG, DuckDuckGo web trends, and LangGraph outfit assembly.
-   - Test granular actions under outfits: tap `🧺 Item in Laundry` to test wardrobe rotation exclusions, or `🔄 More Options` for alternative looks.
-5. When finished, send **`/adminlive`** to return to your private session.
+To evaluate the solution immediately without spending time photographing and uploading 10+ garments, follow the quick setup steps below to clone, configure, load the pre-seeded evaluation database, and evaluate the bot.
 
 ---
 
-### 🎮 Available Telegram Commands
+### 🚀 1. Clone, Environment & Dependencies
 
-| Command | Description |
-| :--- | :--- |
-| **`/admintest`** | **Judge Evaluation**: Switches to shared test wardrobe pre-seeded with items (Password: `demo123`) |
-| **`/style [occasion] [location]`** | Triggers LangGraph styling engine with live weather RAG & web fashion trends |
-| **`/wardrobe`** | Interactive 2-step digital wardrobe with badged previews, edit, delete, and laundry controls |
-| **`/profile`** | 7-step onboarding wizard (body build, proportions, preferred silhouettes, thermal bias) |
-| **`/laundry`** | View dirty laundry hamper and toggle items clean |
-| **`/delete`** | Delete individual items or execute a safe 2-step complete wardrobe reset |
-| **`/adminlive`** | Exits judge pool mode and returns to your isolated private wardrobe |
-| **`/cancel`** | Aborts any active prompt, intake correction, or conversation flow |
-
----
-
-## ⚙️ Environment Setup & Installation
-
-### 1. Prerequisites & Virtual Environment
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/Jerrywoohoo/Fashion-sense-bot.git
 cd Fashion-sense-bot
 
-# Create and activate virtual environment
+# 2. Create and activate a clean Python virtual environment (Python 3.10+ / 3.12 recommended)
 python3 -m venv .venv
-source .venv/bin/activate       # Windows: .venv\Scripts\activate
+source .venv/bin/activate       # On Windows: .venv\Scripts\activate
 
-# Install dependencies
+# 3. Install required production dependencies
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Configuration (`.env`)
-Copy `.env.example` to `.env` and fill in credentials:
+---
+
+### 🔑 2. Environment Configuration (`.env`)
+
+Copy `.env.example` to create your active `.env` file:
 ```bash
 cp .env.example .env
 ```
 
+Ensure your `.env` contains your API credentials:
 ```env
 # Required: Telegram Bot Token from @BotFather
 TELEGRAM_BOT_TOKEN=your_bot_token_here
@@ -78,11 +53,65 @@ DATABASE_PATH=data/wardrobe.db
 ADMIN_TEST_PASSWORD=demo123
 ```
 
-### 3. Launch the Bot
+---
+
+### 📦 3. Pre-Seeded Evaluation Database Setup
+
+> [!IMPORTANT]
+> **Evaluation Testing Database (`wardrobe.db`)**:  
+> We provide our pre-seeded evaluation database separately as a submission file (`wardrobe.db`) pre-populated with diverse garments across all categories.
+> 
+> If you are setting up with the separately provided database file:
+> 1. Download the provided `wardrobe.db` file.
+> 2. Move or copy it into the `data/` directory of the project:
+>    ```bash
+>    mkdir -p data
+>    mv /path/to/downloaded/wardrobe.db data/wardrobe.db
+>    ```
+> *(Note: A pre-seeded `data/wardrobe.db` is also tracked in the repository so the bot can be tested immediately out-of-the-box if you do not replace it.)*
+
+---
+
+### ⚡ 4. Launch the Bot Application
+
 ```bash
 python bot.py
 ```
-*Stop anytime with `Ctrl+C` — the bot shuts down gracefully via signal handling.*
+*The bot runs with live terminal logging. You can stop it cleanly anytime with `Ctrl + C`.*
+
+---
+
+### 🎮 5. Zero-Friction Judge Testing on Telegram
+
+1. Open your Telegram client and start your bot by sending **`/start`**.
+2. Switch to the evaluation wardrobe by sending:
+   ```text
+   /admintest
+   ```
+3. When prompted, enter the evaluation password:
+   ```text
+   demo123
+   ```
+4. You are now inside **Shared Judge Pool Mode** (`POOL_TEST_USER`):
+   - **`/wardrobe`**: Inspect the digital wardrobe across Tops, Bottoms, Outerwear, Footwear, and Accessories with photo previews and 2-step management.
+   - **`/style dinner date in Tokyo`** or **`/style rainy office day in London`**: Triggers the live Open-Meteo weather RAG, DuckDuckGo trend scraper, and LangGraph outfit assembly.
+   - **Interactive Actions**: Tap `🧺 Item in Laundry` to test wardrobe rotation exclusions, or `🔄 More Options` for alternative looks.
+5. When finished, send **`/adminlive`** to return to your isolated private wardrobe.
+
+---
+
+### 📋 Available Telegram Commands Reference
+
+| Command | Description |
+| :--- | :--- |
+| **`/admintest`** | **Judge Mode**: Switches to shared test wardrobe pre-seeded with items (Password: `demo123`) |
+| **`/style [occasion] [location]`** | Triggers LangGraph styling engine with live weather RAG & web fashion trends |
+| **`/wardrobe`** | Interactive 2-step digital wardrobe with badged previews, edit, delete, and laundry controls |
+| **`/profile`** | 7-step onboarding wizard (body build, proportions, preferred silhouettes, thermal bias) |
+| **`/laundry`** | View dirty laundry hamper and toggle items clean |
+| **`/delete`** | Delete individual items or execute a safe 2-step complete wardrobe reset |
+| **`/adminlive`** | Exits judge pool mode and returns to your isolated private wardrobe |
+| **`/cancel`** | Aborts any active prompt, intake correction, or conversation flow |
 
 ---
 

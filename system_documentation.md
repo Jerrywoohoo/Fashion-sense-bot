@@ -292,20 +292,60 @@ Located in [`app/style_matrix.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fa
 
 ## 9. Zero-Friction Judge Evaluation Guide
 
-To evaluate the solution immediately without spending time photographing and uploading 10+ garments, the bot includes a pre-seeded **Admin Test Pool Mode** with clean, pre-categorized clothing items.
+To evaluate the solution immediately without spending time photographing and uploading 10+ garments, follow the quick setup steps below to clone, configure, load the pre-seeded evaluation database, and evaluate the bot.
 
-### ⚡ Quick Start: Zero-Friction Judge Mode
-1. Open the bot on Telegram and start the conversation with `/start`.
-2. Send **`/admintest`** to enter Judge Mode.
-3. When prompted, enter the demo password:
+### 🚀 1. Clone, Environment & Dependencies
+```bash
+# 1. Clone the repository
+git clone https://github.com/Jerrywoohoo/Fashion-sense-bot.git
+cd Fashion-sense-bot
+
+# 2. Create and activate a clean Python virtual environment
+python3 -m venv .venv
+source .venv/bin/activate       # On Windows: .venv\Scripts\activate
+
+# 3. Install required production dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 🔑 2. Environment Configuration (`.env`)
+```bash
+cp .env.example .env
+```
+Ensure your `.env` contains your `TELEGRAM_BOT_TOKEN` and AWS Bedrock credentials.
+
+### 📦 3. Pre-Seeded Evaluation Database Setup
+> [!IMPORTANT]
+> **Evaluation Testing Database (`wardrobe.db`)**:  
+> We provide our pre-seeded evaluation database separately as a submission file (`wardrobe.db`) pre-populated with diverse garments across all categories.
+> 
+> If you are setting up with the separately provided database file:
+> 1. Download the provided `wardrobe.db` file.
+> 2. Move or copy it into the `data/` directory of the project:
+>    ```bash
+>    mkdir -p data
+>    mv /path/to/downloaded/wardrobe.db data/wardrobe.db
+>    ```
+> *(Note: A pre-seeded `data/wardrobe.db` is also tracked in the repository so the bot can be tested immediately out-of-the-box if you do not replace it.)*
+
+### ⚡ 4. Launch the Bot Application
+```bash
+python bot.py
+```
+
+### 🎮 5. Telegram Judge Commands
+1. Open your Telegram client and start your bot by sending **`/start`**.
+2. Switch to the evaluation wardrobe by sending **`/admintest`**.
+3. When prompted, enter the evaluation password:
    ```text
    demo123
    ```
-4. You are now in **Shared Pool Mode** (`POOL_TEST_USER`):
-   - Type **`/wardrobe`** to inspect the pre-seeded digital wardrobe across Tops, Bottoms, Outerwear, Footwear, and Accessories.
-   - Type **`/style dinner date in Tokyo`** or **`/style rainy office day in London`** to test the live Weather RAG, DuckDuckGo web trends, and LangGraph outfit assembly.
-   - Test granular actions under outfits: tap `🧺 Item in Laundry` to test wardrobe rotation exclusions, or `🔄 More Options` for alternative looks.
-5. When finished, send **`/adminlive`** to return to your private session.
+4. You are now inside **Shared Judge Pool Mode** (`POOL_TEST_USER`):
+   - **`/wardrobe`**: Inspect the digital wardrobe across Tops, Bottoms, Outerwear, Footwear, and Accessories with photo previews and 2-step management.
+   - **`/style dinner date in Tokyo`** or **`/style rainy office day in London`**: Triggers the live Open-Meteo weather RAG, DuckDuckGo trend scraper, and LangGraph outfit assembly.
+   - **Interactive Actions**: Tap `🧺 Item in Laundry` to test wardrobe rotation exclusions, or `🔄 More Options` for alternative looks.
+5. When finished, send **`/adminlive`** to return to your isolated private wardrobe.
 
 ---
 
