@@ -288,20 +288,23 @@ async def _send_wardrobe_ootd_view(
         image_path = ootd.get("image_path")
 
         item_lines = []
+        labels: list[str] = []
         for i_id in item_ids:
             g = get_garment_by_id(i_id)
             if g:
                 desc = _format_item_title(g.get("sub_category") or "piece", g.get("color") or "", g.get("brand"))
-                cat = g.get("category") or ""
-                emoji = _get_category_emoji(cat)
+                cat = (g.get("category") or "item").replace("_", " ").title()
             else:
-                desc = "clothing piece"
-                emoji = "👗"
+                desc = "piece"
+                cat = "Item"
             safe_desc = escape_markdown(desc, version=1)
+            safe_cat = escape_markdown(cat, version=1)
             if i_id in linked_ids:
-                item_lines.append(f"• 🔗 [Linked Duplicate] *{i_id}*: {safe_desc}")
+                item_lines.append(f"• [Linked Duplicate] *{i_id}*: {safe_desc} ({safe_cat})")
+                labels.append(f"[Linked] {i_id}: {desc} ({cat})")
             else:
-                item_lines.append(f"• {emoji} *{i_id}*: {safe_desc}")
+                item_lines.append(f"• *{i_id}*: {safe_desc} ({safe_cat})")
+                labels.append(f"{i_id}: {desc} ({cat})")
 
         items_text = "\n".join(item_lines) if item_lines else "• _No items tagged_"
         safe_occ = escape_markdown(occasion, version=1)
@@ -320,18 +323,44 @@ async def _send_wardrobe_ootd_view(
         if image_path:
             resolved = resolve_image_path(image_path)
             if resolved and resolved.is_file():
+                buf: Optional[io.BytesIO] = None
                 try:
-                    with open(resolved, "rb") as f:
+                    if labels:
+                        buf = await asyncio.to_thread(create_labeled_image_bytes, resolved, labels)
                         await context.bot.send_photo(
                             chat_id=query.message.chat_id,
-                            photo=f,
+                            photo=buf,
                             caption=caption[:1024],
                             parse_mode=ParseMode.MARKDOWN,
                             reply_markup=reply_markup,
                         )
+                    else:
+                        with open(resolved, "rb") as f:
+                            await context.bot.send_photo(
+                                chat_id=query.message.chat_id,
+                                photo=f,
+                                caption=caption[:1024],
+                                parse_mode=ParseMode.MARKDOWN,
+                                reply_markup=reply_markup,
+                            )
                     sent_photo = True
                 except Exception:
-                    logger.exception("Failed to send photo for OOTD #%s", outfit_id)
+                    logger.exception("Failed to send labeled photo for OOTD #%s, retrying raw", outfit_id)
+                    try:
+                        with open(resolved, "rb") as f:
+                            await context.bot.send_photo(
+                                chat_id=query.message.chat_id,
+                                photo=f,
+                                caption=caption[:1024],
+                                parse_mode=ParseMode.MARKDOWN,
+                                reply_markup=reply_markup,
+                            )
+                        sent_photo = True
+                    except Exception:
+                        logger.exception("Failed to send raw photo for OOTD #%s", outfit_id)
+                finally:
+                    if buf:
+                        buf.close()
 
         if not sent_photo:
             await context.bot.send_message(
@@ -438,7 +467,8 @@ def _build_wardrobe_link_source_keyboard(garments: list[dict[str, Any]], categor
             g.get("color") or "",
             g.get("brand"),
         )
-        buttons.append([InlineKeyboardButton(f"🔗 {item_id}: {desc}", callback_data=f"wlink_src_{item_id}")])
+        cat = (g.get("category") or category or "item").replace("_", " ").title()
+        buttons.append([InlineKeyboardButton(f"{item_id}: {desc} ({cat})", callback_data=f"wlink_src_{item_id}")])
     buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"wardrobe_back_cat_{category}")])
     return InlineKeyboardMarkup(buttons)
 
@@ -2017,7 +2047,8 @@ async def verification_callback_handler(
                 tgt_g.get("color") or "",
                 tgt_g.get("brand"),
             )
-            buttons.append([InlineKeyboardButton(f"🔗 Merge into {tgt_id}: {tgt_desc}", callback_data=f"wlink_tgt_{src_id}_{tgt_id}")])
+            tgt_cat = (tgt_g.get("category") or "item").replace("_", " ").title()
+            buttons.append([InlineKeyboardButton(f"Merge into {tgt_id}: {tgt_desc} ({tgt_cat})", callback_data=f"wlink_tgt_{src_id}_{tgt_id}")])
         buttons.append([InlineKeyboardButton("❌ Cancel", callback_data="wardrobe_menu")])
 
         await query.message.reply_text(
@@ -2095,11 +2126,13 @@ async def verification_callback_handler(
             return
 
         buttons = []
+        linked_set = set(ootd.get("linked_item_ids") or [])
         for i_id in item_ids:
             g = get_garment_by_id(i_id)
             desc = _format_item_title(g.get("sub_category") or "piece", g.get("color") or "", g.get("brand")) if g else "piece"
-            emoji = _get_category_emoji(g.get("category") if g else None)
-            buttons.append([InlineKeyboardButton(f"{emoji} {i_id}: {desc}", callback_data=f"wlink_src_{i_id}")])
+            cat = (g.get("category") or "item").replace("_", " ").title() if g else "Item"
+            dup_tag = "[Linked] " if i_id in linked_set else ""
+            buttons.append([InlineKeyboardButton(f"{dup_tag}{i_id}: {desc} ({cat})", callback_data=f"wlink_src_{i_id}")])
         buttons.append([InlineKeyboardButton("⬅️ Back to OOTDs", callback_data="wardrobe_cat_ootd")])
 
         await query.message.reply_text(
@@ -2257,7 +2290,8 @@ async def verification_callback_handler(
                     g = get_garment_by_id(g_id)
                     if g:
                         desc = _format_item_title(g.get("sub_category") or "piece", g.get("color") or "", g.get("brand"))
-                        buttons.append([InlineKeyboardButton(f"📸 OOTD #{oid} ({occ}) ➡️ {g_id}: {desc}", callback_data=f"manlink_do_{item_id}_{g_id}")])
+                        g_cat = (g.get("category") or "item").replace("_", " ").title()
+                        buttons.append([InlineKeyboardButton(f"OOTD #{oid} ({occ}) -> {g_id}: {desc} ({g_cat})", callback_data=f"manlink_do_{item_id}_{g_id}")])
             if not buttons:
                 await query.message.reply_text("No items found in saved OOTDs.")
                 return

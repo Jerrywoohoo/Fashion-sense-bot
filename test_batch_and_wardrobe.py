@@ -311,6 +311,18 @@ class TestBatchAndWardrobe(unittest.TestCase):
         self.assertEqual(_get_category_emoji("accessory"), "🎒")
         self.assertEqual(_get_category_emoji("something_else"), "👗")
 
+    def test_wardrobe_link_keyboard_formatting(self):
+        from app.handlers import _build_wardrobe_link_source_keyboard
+
+        garments = [
+            {"item_id": "item_101", "sub_category": "linen shirt", "color": "white", "brand": "Uniqlo", "category": "top"},
+            {"item_id": "item_102", "sub_category": "denim jeans", "color": "blue", "brand": "Levi's", "category": "bottom"},
+        ]
+        kb = _build_wardrobe_link_source_keyboard(garments, "all")
+        button_texts = [btn.text for row in kb.inline_keyboard for btn in row]
+        self.assertIn("item_101: Uniqlo white linen shirt (Top)", button_texts)
+        self.assertIn("item_102: Levi's blue denim jeans (Bottom)", button_texts)
+
 
 if __name__ == "__main__":
     unittest.main()

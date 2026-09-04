@@ -150,7 +150,7 @@ python bot.py
    - Enforces deterministic color harmony (monochromatic, complementary, analogous) and silhouette balance from `app/style_matrix.py`.
 
 5. **2-Step Wardrobe & 📸 OOTD Gallery Management (`/wardrobe`, `/laundry`)**:
-   - **📸 OOTD Category**: Dedicated wardrobe section displaying saved outfits, occasion, date, and badged item tags distinguishing linked duplicates (`• 🔗 [Linked Duplicate] item_xxx`) from unique pieces.
+   - **📸 OOTD Category**: Dedicated wardrobe section displaying saved outfits, occasion, date, badged photo previews, and clean item tags distinguishing linked duplicates (`• [Linked Duplicate] item_xxx: description (Category)`) from individual pieces (`• item_yyy: description (Category)`).
    - **One-Click OOTD Item Linking**: Tap `🔗 Link Item from OOTD` to link any piece from a logged outfit to an existing wardrobe piece, automatically consolidating appearances and wear history.
    - **Wardrobe Duplicate Linking**: Tap `🔗 Link Duplicate` in the main menu or within any category to merge duplicate garments into an existing piece.
    - Clean category navigation with badged photo albums, in-place Edit, Delete, and Laundry actions, 4-word badge display caps, and natural numeric sorting (`item_101`, `item_102`...).
