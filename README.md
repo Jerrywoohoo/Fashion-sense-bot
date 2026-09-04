@@ -1,7 +1,7 @@
 # 👗 AI Stylist & Smart Wardrobe Manager
 
 > **An Agentic AI personal styling assistant delivered over Telegram.**  
-> Built with multimodal vision intake, human-in-the-loop refinement, conservative duplicate detection, interactive body profiling, and a stateful **LangGraph** styling engine powered by live weather (Open-Meteo), real-time web trends (DuckDuckGo `ddgs`), outfit history RAG, and deterministic color/proportion matrices.
+> Built with multimodal vision intake, human-in-the-loop refinement, conservative duplicate detection, interactive body profiling, and a stateful **LangGraph** styling engine powered by live weather (Open-Meteo), real-time web trends (DuckDuckGo `ddgs`), outfit history RAG, deterministic color/proportion matrices, and seamless OOTD logging.
 
 ---
 
