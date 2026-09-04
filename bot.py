@@ -106,7 +106,7 @@ def build_application() -> Application:
     )
     application.add_handler(
         CallbackQueryHandler(
-            verification_callback_handler, pattern=r"^(confirm|delete|delitem|edit|edititem|manlink|wardrobe|w)_"
+            verification_callback_handler, pattern=r"^(confirm|delete|delitem|edit|edititem|manlink|wardrobe|w|wlink|ootd)_"
         )
     )
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))

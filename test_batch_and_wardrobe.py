@@ -198,6 +198,119 @@ class TestBatchAndWardrobe(unittest.TestCase):
         log_id = log_outfit_wear(fresh_user_id, ["item_101", "item_102"], "party", action="worn")
         self.assertGreater(log_id, 0)
 
+    def test_save_user_outfit_with_linked_items_and_image(self):
+        from app.database import delete_user_outfit, get_user_outfit_by_id, get_user_outfits, save_user_outfit
+
+        user_id = "user_ootd_test_1"
+        outfit_id = save_user_outfit(
+            user_id=user_id,
+            occasion="Brunch with friends",
+            item_ids=["item_101", "item_102", "item_103"],
+            linked_item_ids=["item_101"],
+            image_path=self.ootd_img,
+        )
+        self.assertGreater(outfit_id, 0)
+
+        outfits = get_user_outfits(user_id)
+        self.assertEqual(len(outfits), 1)
+        self.assertEqual(outfits[0]["outfit_id"], outfit_id)
+        self.assertEqual(outfits[0]["occasion"], "brunch with friends")
+        self.assertEqual(outfits[0]["item_ids"], ["item_101", "item_102", "item_103"])
+        self.assertEqual(outfits[0]["linked_item_ids"], ["item_101"])
+        self.assertEqual(outfits[0]["image_path"], self.ootd_img)
+
+        fetched = get_user_outfit_by_id(outfit_id, user_id)
+        self.assertIsNotNone(fetched)
+        self.assertEqual(fetched["outfit_id"], outfit_id)
+        self.assertEqual(fetched["linked_item_ids"], ["item_101"])
+
+        deleted = delete_user_outfit(outfit_id, user_id)
+        self.assertTrue(deleted)
+        self.assertEqual(len(get_user_outfits(user_id)), 0)
+
+    def test_link_garment_to_existing_updates_user_outfits(self):
+        from app.database import get_user_outfits, save_user_outfit
+
+        # Create two garments in DB
+        top1 = ExtractedGarment(
+            category="top", sub_category="linen shirt", primary_color="white",
+            silhouette_fit="regular", fabric_weight="medium", formality_tier=2
+        )
+        top2 = ExtractedGarment(
+            category="top", sub_category="white linen shirt", primary_color="white",
+            silhouette_fit="regular", fabric_weight="medium", formality_tier=2
+        )
+        res1 = GarmentExtractionResult(photo_type=PhotoType.SINGLE_ITEM, garments=[top1])
+        res2 = GarmentExtractionResult(photo_type=PhotoType.SINGLE_ITEM, garments=[top2])
+
+        ids1 = insert_capture_garments(self.user_id, self.single_img, "cap_1", res1)
+        ids2 = insert_capture_garments(self.user_id, self.single_img, "cap_2", res2)
+        tgt_id = ids1[0]
+        src_id = ids2[0]
+        mark_garment_verified(tgt_id, True)
+        mark_garment_verified(src_id, True)
+
+        # Save an OOTD referencing src_id
+        outfit_id = save_user_outfit(
+            self.user_id, "Weekend chill", [src_id, "item_999"], image_path=self.ootd_img
+        )
+        self.assertGreater(outfit_id, 0)
+
+        # Now merge src_id into tgt_id
+        ok = link_garment_to_existing(
+            new_item_id=src_id,
+            existing_item_id=tgt_id,
+            user_id=self.user_id,
+        )
+        self.assertTrue(ok)
+        self.assertIsNone(get_garment_by_id(src_id))
+
+        # Check that the OOTD record was updated:
+        # src_id replaced with tgt_id, and tgt_id added to linked_item_ids
+        outfits = get_user_outfits(self.user_id)
+        self.assertEqual(len(outfits), 1)
+        self.assertIn(tgt_id, outfits[0]["item_ids"])
+        self.assertNotIn(src_id, outfits[0]["item_ids"])
+        self.assertIn(tgt_id, outfits[0]["linked_item_ids"])
+
+    def test_verification_keyboard_non_committing_toggles(self):
+        from app.handlers import _verification_keyboard
+
+        capture_id = "cap_test_123"
+        item_ids = ["item_1", "item_2"]
+        detected_links = {"item_1": "item_prev_10"}
+        active_links = {"item_1": "item_prev_10"}
+
+        kb = _verification_keyboard(
+            capture_id,
+            has_duplicates=True,
+            item_ids=item_ids,
+            detected_links=detected_links,
+            active_links=active_links,
+        )
+        button_data = [btn.callback_data for row in kb.inline_keyboard for btn in row]
+
+        # Duplicate toggle callback exists
+        self.assertIn(f"confirm_toggle_item_1_{capture_id}", button_data)
+        # Explicit confirmation row exists
+        self.assertIn(f"confirm_apply_{capture_id}", button_data)
+        self.assertIn(f"confirm_{capture_id}", button_data)
+        # Edit buttons exist for all items
+        self.assertIn("edititem_item_1", button_data)
+        self.assertIn("edititem_item_2", button_data)
+        # Manual duplicate link button exists
+        self.assertIn(f"manlink_start_{capture_id}", button_data)
+
+    def test_category_emoji_helper(self):
+        from app.handlers import _get_category_emoji
+
+        self.assertEqual(_get_category_emoji("top"), "👕")
+        self.assertEqual(_get_category_emoji("bottom"), "👖")
+        self.assertEqual(_get_category_emoji("outerwear"), "🧥")
+        self.assertEqual(_get_category_emoji("footwear"), "👟")
+        self.assertEqual(_get_category_emoji("accessory"), "🎒")
+        self.assertEqual(_get_category_emoji("something_else"), "👗")
+
 
 if __name__ == "__main__":
     unittest.main()

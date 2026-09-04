@@ -72,6 +72,11 @@ _USER_MIGRATIONS: dict[str, str] = {
     "thermal_preference": "thermal_preference TEXT",
 }
 
+_USER_OUTFIT_MIGRATIONS: dict[str, str] = {
+    "linked_item_ids": "linked_item_ids TEXT DEFAULT '[]'",
+    "image_path": "image_path TEXT",
+}
+
 
 @contextmanager
 def _connect() -> Iterator[sqlite3.Connection]:
@@ -147,6 +152,7 @@ def init_db(db_path: str = DEFAULT_DB_PATH) -> None:
             )
             """
         )
+        _ensure_columns(conn, "user_outfits", _USER_OUTFIT_MIGRATIONS)
         _ensure_columns(conn, "users", _USER_MIGRATIONS)
         conn.execute(
             """
@@ -432,16 +438,29 @@ def confirm_capture(capture_id: str) -> None:
 def link_garment_to_existing(
     new_item_id: str,
     existing_item_id: str,
-    user_id: str,
-    image_path: str,
-    caption: Optional[str],
-) -> None:
-    """Replace a pending duplicate with another appearance of a saved item."""
+    user_id: Optional[str] = None,
+    image_path: Optional[str] = None,
+    caption: Optional[str] = None,
+) -> bool:
+    """Consolidate an item into an existing verified garment.
+
+    Transfers any appearances (e.g. OOTDs) from new_item_id to existing_item_id,
+    records the new appearance, updates any user_outfits referencing new_item_id,
+    and removes the redundant new_item_id.
+    """
     with _connect() as conn:
-        pending = conn.execute(
+        if user_id is None:
+            urow = conn.execute("SELECT user_id FROM garments WHERE item_id = ?", (existing_item_id,)).fetchone()
+            if urow:
+                user_id = urow["user_id"]
+
+        if user_id is None:
+            raise ValueError("Cannot link garments: user_id could not be resolved.")
+
+        item_to_link = conn.execute(
             """
-            SELECT source_type FROM garments
-            WHERE item_id = ? AND user_id = ? AND is_verified = 0
+            SELECT source_type, is_verified, image_path, user_caption FROM garments
+            WHERE item_id = ? AND user_id = ?
             """,
             (new_item_id, user_id),
         ).fetchone()
@@ -449,19 +468,56 @@ def link_garment_to_existing(
             "SELECT 1 FROM garments WHERE item_id = ? AND user_id = ?",
             (existing_item_id, user_id),
         ).fetchone()
-        if pending is None or existing is None:
+        if item_to_link is None or existing is None:
             raise ValueError("Cannot link garments that are not owned by this user.")
 
+        resolved_img = image_path or item_to_link["image_path"]
+        resolved_cap = caption if caption is not None else item_to_link["user_caption"]
+
+        # Re-point any existing appearances of new_item_id to existing_item_id
         conn.execute(
             """
-            INSERT INTO garment_appearances
-                (item_id, user_id, image_path, source_type, user_caption)
-            VALUES (?, ?, ?, ?, ?)
+            UPDATE garment_appearances
+            SET item_id = ?
+            WHERE item_id = ? AND user_id = ?
             """,
-            (existing_item_id, user_id, image_path, pending["source_type"], caption),
+            (existing_item_id, new_item_id, user_id),
         )
-        # The pending item's initial appearance is deleted by the FK cascade.
+
+        # Record this appearance for existing_item_id if image is available
+        if resolved_img:
+            conn.execute(
+                """
+                INSERT INTO garment_appearances
+                    (item_id, user_id, image_path, source_type, user_caption)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (existing_item_id, user_id, resolved_img, item_to_link["source_type"] or "single_item", resolved_cap),
+            )
+
+        # Update any user_outfits referencing new_item_id
+        outfit_rows = conn.execute(
+            "SELECT outfit_id, item_ids, linked_item_ids FROM user_outfits WHERE user_id = ?",
+            (user_id,),
+        ).fetchall()
+        for ofr in outfit_rows:
+            try:
+                of_items = json.loads(ofr["item_ids"]) if isinstance(ofr["item_ids"], str) else []
+                of_linked = json.loads(ofr["linked_item_ids"]) if ofr["linked_item_ids"] else []
+                if new_item_id in of_items:
+                    of_items = [existing_item_id if i == new_item_id else i for i in of_items]
+                    if existing_item_id not in of_linked:
+                        of_linked.append(existing_item_id)
+                    conn.execute(
+                        "UPDATE user_outfits SET item_ids = ?, linked_item_ids = ? WHERE outfit_id = ?",
+                        (json.dumps(of_items), json.dumps(of_linked), ofr["outfit_id"]),
+                    )
+            except Exception:
+                pass
+
+        # Delete new_item_id from garments
         conn.execute("DELETE FROM garments WHERE item_id = ?", (new_item_id,))
+        return True
 
 
 def delete_capture(capture_id: str) -> None:
@@ -591,23 +647,55 @@ def delete_all_user_garments(user_id: str) -> tuple[int, list[str]]:
 
 
 def save_user_outfit(
-    user_id: str, occasion: str, item_ids: list[str], aesthetic: Optional[str] = None
+    user_id: str,
+    occasion: str,
+    item_ids: list[str],
+    aesthetic: Optional[str] = None,
+    linked_item_ids: Optional[list[str]] = None,
+    image_path: Optional[str] = None,
 ) -> int:
     """Save an OOTD combo as a preferred user outfit demonstration."""
     with _connect() as conn:
         _ensure_user_exists(conn, user_id)
+        resolved_img = image_path
+        if not resolved_img and item_ids:
+            for i_id in item_ids:
+                row = conn.execute(
+                    "SELECT image_path FROM garment_appearances WHERE item_id = ? AND source_type = 'ootd' ORDER BY appearance_id DESC LIMIT 1",
+                    (i_id,),
+                ).fetchone()
+                if row and row["image_path"]:
+                    resolved_img = row["image_path"]
+                    break
+            if not resolved_img:
+                for i_id in item_ids:
+                    row = conn.execute(
+                        "SELECT image_path FROM garments WHERE item_id = ? AND source_type = 'ootd' LIMIT 1",
+                        (i_id,),
+                    ).fetchone()
+                    if row and row["image_path"]:
+                        resolved_img = row["image_path"]
+                        break
+
         cursor = conn.execute(
             """
-            INSERT INTO user_outfits (user_id, occasion, item_ids, aesthetic)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO user_outfits (user_id, occasion, item_ids, aesthetic, linked_item_ids, image_path)
+            VALUES (?, ?, ?, ?, ?, ?)
             """,
-            (user_id, occasion.strip().lower(), json.dumps(item_ids), aesthetic),
+            (
+                user_id,
+                occasion.strip().lower(),
+                json.dumps(item_ids),
+                aesthetic,
+                json.dumps(linked_item_ids or []),
+                resolved_img,
+            ),
         )
         return cursor.lastrowid or 0
 
 
 def get_user_outfits(user_id: str, occasion_keyword: Optional[str] = None, limit: int = 3) -> list[dict[str, Any]]:
-    """Retrieve the user's past outfits to use as prompt demonstrations."""
+    """Retrieve the user's past outfits to use as prompt demonstrations or wardrobe views."""
     with _connect() as conn:
         if occasion_keyword:
             rows = conn.execute(
@@ -628,13 +716,78 @@ def get_user_outfits(user_id: str, occasion_keyword: Optional[str] = None, limit
                 (user_id, limit),
             ).fetchall()
 
-    results = []
-    for r in rows:
-        d = _row_to_dict(r)
+        results = []
+        for r in rows:
+            d = _row_to_dict(r)
+            if isinstance(d.get("item_ids"), str):
+                try:
+                    d["item_ids"] = json.loads(d["item_ids"])
+                except Exception:
+                    d["item_ids"] = []
+            if isinstance(d.get("linked_item_ids"), str):
+                try:
+                    d["linked_item_ids"] = json.loads(d["linked_item_ids"])
+                except Exception:
+                    d["linked_item_ids"] = []
+            elif d.get("linked_item_ids") is None:
+                d["linked_item_ids"] = []
+
+            if not d.get("image_path") and d.get("item_ids"):
+                for i_id in d["item_ids"]:
+                    app_row = conn.execute(
+                        "SELECT image_path FROM garment_appearances WHERE item_id = ? AND source_type = 'ootd' ORDER BY appearance_id DESC LIMIT 1",
+                        (i_id,),
+                    ).fetchone()
+                    if app_row and app_row["image_path"]:
+                        d["image_path"] = app_row["image_path"]
+                        break
+            results.append(d)
+        return results
+
+
+def get_user_outfit_by_id(outfit_id: int, user_id: str) -> Optional[dict[str, Any]]:
+    """Retrieve a single outfit by ID."""
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM user_outfits WHERE outfit_id = ? AND user_id = ?",
+            (outfit_id, user_id),
+        ).fetchone()
+        if not row:
+            return None
+        d = _row_to_dict(row)
         if isinstance(d.get("item_ids"), str):
-            d["item_ids"] = json.loads(d["item_ids"])
-        results.append(d)
-    return results
+            try:
+                d["item_ids"] = json.loads(d["item_ids"])
+            except Exception:
+                d["item_ids"] = []
+        if isinstance(d.get("linked_item_ids"), str):
+            try:
+                d["linked_item_ids"] = json.loads(d["linked_item_ids"])
+            except Exception:
+                d["linked_item_ids"] = []
+        elif d.get("linked_item_ids") is None:
+            d["linked_item_ids"] = []
+
+        if not d.get("image_path") and d.get("item_ids"):
+            for i_id in d["item_ids"]:
+                app_row = conn.execute(
+                    "SELECT image_path FROM garment_appearances WHERE item_id = ? AND source_type = 'ootd' ORDER BY appearance_id DESC LIMIT 1",
+                    (i_id,),
+                ).fetchone()
+                if app_row and app_row["image_path"]:
+                    d["image_path"] = app_row["image_path"]
+                    break
+        return d
+
+
+def delete_user_outfit(outfit_id: int, user_id: str) -> bool:
+    """Delete an OOTD record from user_outfits."""
+    with _connect() as conn:
+        cursor = conn.execute(
+            "DELETE FROM user_outfits WHERE outfit_id = ? AND user_id = ?",
+            (outfit_id, user_id),
+        )
+        return cursor.rowcount > 0
 
 
 def log_outfit_wear(

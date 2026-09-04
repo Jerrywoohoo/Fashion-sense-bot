@@ -110,7 +110,7 @@ python bot.py
 | :--- | :--- |
 | **`/admintest`** | **Judge Mode**: Switches to shared test wardrobe pre-seeded with items (Password: `demo123`) |
 | **`/style [occasion] [location]`** | Triggers LangGraph styling engine with live weather RAG & web fashion trends |
-| **`/wardrobe`** | Interactive 2-step digital wardrobe with badged previews, edit, delete, and laundry controls |
+| **`/wardrobe`** | Interactive digital wardrobe with badged previews, 📸 OOTD gallery, duplicate linking, edit, delete, and laundry controls |
 | **`/profile`** | 7-step onboarding wizard (body build, proportions, preferred silhouettes, thermal bias) |
 | **`/laundry`** | View dirty laundry hamper and toggle items clean |
 | **`/delete`** | Delete individual items or execute a safe 2-step complete wardrobe reset |
@@ -127,8 +127,8 @@ python bot.py
 ├──────────────────┬──────────────────┬──────────────────┬────────────────────┤
 │ 1. PHOTO INTAKE  │ 2. HITL REVIEW   │ 3. WARDROBE MGT  │ 4. AGENTIC STYLIST │
 │ • Single & OOTD  │ • Natural prompt │ • Clean 2-step   │ • Live Weather RAG │
-│ • Multi-piece    │ • Granular dup   │ • 4-word badges  │ • DuckDuckGo Trends│
-│ • Bedrock Vision │ • Instant verify │ • Natural sort   │ • LangGraph Engine │
+│ • Multi-piece    │ • Granular dup   │ • 📸 OOTD Gallery│ • DuckDuckGo Trends│
+│ • Bedrock Vision │ • Non-blocking   │ • Manual Linking │ • LangGraph Engine │
 └──────────────────┴──────────────────┴──────────────────┴────────────────────┘
 ```
 
@@ -139,7 +139,8 @@ python bot.py
 
 2. **Human-in-the-Loop (HITL) & Granular Duplicate Linking (`app/handlers.py`)**:
    - Staged in unverified state (`is_verified = 0`) until user confirms or supplies natural-language revisions (e.g. *"the jacket is oversized charcoal wool"*).
-   - **Granular Per-Item Duplicate Selection**: When multiple items in an OOTD resemble existing clothes, users can toggle each item individually (e.g., link shirt to existing item, but keep pants as a brand-new piece).
+   - **Non-Committing Per-Item Duplicate Selection**: Users can toggle duplicate candidates on/off without closing the capture card, keeping all item edit buttons (`✏️ Edit item_xxx`) open to adjust details before tapping `✅ Confirm & Save`.
+   - **Prominent Manual Duplicate Link**: If automatic similarity doesn't catch a duplicate, users can tap `🔗 Manual Duplicate Link` anytime on intake cards or directly inside `/wardrobe`.
 
 3. **7-Step Profile Onboarding (`app/profile_flow.py`)**:
    - Captures body build, proportions (e.g., long torso, broad shoulders), preferred silhouettes, and thermal preference (runs warm/cold).
@@ -148,10 +149,11 @@ python bot.py
    - Multi-source RAG combining **live Open-Meteo weather**, **DuckDuckGo fashion trends (`ddgs`)**, **past outfit history**, and **48-hour anti-repeat rotation cooldown**.
    - Enforces deterministic color harmony (monochromatic, complementary, analogous) and silhouette balance from `app/style_matrix.py`.
 
-5. **2-Step Wardrobe & Laundry Management (`/wardrobe`, `/laundry`)**:
-   - Clean 2-step category navigation with badged photo albums and in-place Edit, Delete, and Laundry actions.
-   - 4-word badge display cap prevents chat UI overflow while SQLite retains unconstrained full descriptions for LLM reasoning.
-   - Natural numeric sorting (`item_101`, `item_102`...) across all preview cards and buttons.
+5. **2-Step Wardrobe & 📸 OOTD Gallery Management (`/wardrobe`, `/laundry`)**:
+   - **📸 OOTD Category**: Dedicated wardrobe section displaying saved outfits, occasion, date, and badged item tags distinguishing linked duplicates (`• 🔗 [Linked Duplicate] item_xxx`) from unique pieces.
+   - **One-Click OOTD Item Linking**: Tap `🔗 Link Item from OOTD` to link any piece from a logged outfit to an existing wardrobe piece, automatically consolidating appearances and wear history.
+   - **Wardrobe Duplicate Linking**: Tap `🔗 Link Duplicate` in the main menu or within any category to merge duplicate garments into an existing piece.
+   - Clean category navigation with badged photo albums, in-place Edit, Delete, and Laundry actions, 4-word badge display caps, and natural numeric sorting (`item_101`, `item_102`...).
 
 ---
 

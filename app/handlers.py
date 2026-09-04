@@ -24,11 +24,14 @@ from .database import (
     delete_all_user_garments,
     delete_capture,
     delete_garment,
+    delete_user_outfit,
     find_potential_duplicates,
     get_capture_garments,
     get_garment_by_id,
     get_user_garments,
     get_user_laundry_items,
+    get_user_outfit_by_id,
+    get_user_outfits,
     get_user_profile,
     image_path_is_referenced,
     insert_capture_garments,
@@ -116,7 +119,8 @@ async def wardrobe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     is_pool = bool(context.user_data.get(_POOL_MODE_KEY)) if context.user_data else False
     user_id = POOL_USER_ID if is_pool else str(user.id)
     garments = get_user_garments(user_id, verified_only=True)
-    if not garments:
+    ootds = get_user_outfits(user_id, limit=100)
+    if not garments and not ootds:
         empty_msg = (
             "The test pool wardrobe is empty. Send a photo of a clothing item to add one!"
             if is_pool
@@ -134,18 +138,19 @@ async def wardrobe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     outer_cnt = len(by_cat.get("outerwear", []))
     shoes_cnt = len(by_cat.get("footwear", []))
     acc_cnt = len(by_cat.get("accessory", []))
+    ootd_cnt = len(ootds)
 
     title_header = "👚 *Test Pool Wardrobe*" if is_pool else "👚 *Your Wardrobe*"
     summary = (
-        f"{title_header} ({len(garments)} verified items)\n\n"
+        f"{title_header} ({len(garments)} verified items, {ootd_cnt} OOTDs)\n\n"
         f"• 👕 *Tops*: {tops_cnt}\n"
         f"• 👖 *Bottoms*: {bots_cnt}\n"
         f"• 🧥 *Outerwear*: {outer_cnt}\n"
         f"• 👟 *Footwear*: {shoes_cnt}\n"
-        f"• 🎒 *Accessories*: {acc_cnt}\n\n"
-        "Tap a category below to browse photos, delete items, or manage laundry:"
+        f"• 🎒 *Accessories*: {acc_cnt}\n"
+        f"• 📸 *OOTDs*: {ootd_cnt}\n\n"
+        "Tap a category below to browse photos, link duplicates, delete items, or manage laundry:"
     )
-
 
     keyboard = InlineKeyboardMarkup([
         [
@@ -158,7 +163,11 @@ async def wardrobe_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         ],
         [
             InlineKeyboardButton(f"🎒 Accessories ({acc_cnt})", callback_data="wardrobe_cat_accessory"),
+            InlineKeyboardButton(f"📸 OOTDs ({ootd_cnt})", callback_data="wardrobe_cat_ootd"),
+        ],
+        [
             InlineKeyboardButton(f"🖼️ View All ({len(garments)})", callback_data="wardrobe_all"),
+            InlineKeyboardButton("🔗 Link Duplicate", callback_data="wardrobe_link_pick_source"),
         ],
         [
             InlineKeyboardButton("⚠️ Clear Entire Wardrobe", callback_data="wardrobe_clear_ask"),
@@ -229,11 +238,113 @@ async def _send_wardrobe_category_view(
         for buf in labeled_buffers:
             buf.close()
 
-    # Build clean 3-button management action keyboard
+    # Build clean management action keyboard
     await query.message.reply_text(
-        f"⚙️ *Manage {cat_title} ({len(garments)} items):*\nChoose an action below to edit, delete, or update laundry status:",
+        f"⚙️ *Manage {cat_title} ({len(garments)} items):*\nChoose an action below to edit, delete, link duplicates, or update laundry status:",
         parse_mode=ParseMode.MARKDOWN,
         reply_markup=_wardrobe_category_menu_keyboard(category),
+    )
+
+
+def _get_category_emoji(cat: Optional[str]) -> str:
+    """Return appropriate emoji for garment category."""
+    category = (cat or "").lower()
+    if "top" in category:
+        return "👕"
+    if "bottom" in category:
+        return "👖"
+    if "outer" in category:
+        return "🧥"
+    if "foot" in category or "shoe" in category:
+        return "👟"
+    if "acc" in category:
+        return "🎒"
+    return "👗"
+
+
+async def _send_wardrobe_ootd_view(
+    query: Any,
+    context: ContextTypes.DEFAULT_TYPE,
+    user_id: str,
+) -> None:
+    """Display past OOTD cards with photos, occasions, dates, and garment tags."""
+    ootds = get_user_outfits(user_id, limit=100)
+    if not ootds:
+        await query.message.reply_text(
+            "📸 *You have no saved OOTDs yet.*\n\n"
+            "Send an outfit photo or describe what you wore to log an OOTD!",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Categories", callback_data="wardrobe_menu")]]),
+        )
+        return
+
+    for ootd in ootds:
+        outfit_id = ootd["outfit_id"]
+        occasion = ootd.get("occasion") or "OOTD"
+        created_at = ootd.get("created_at") or ""
+        date_str = created_at[:10] if created_at else ""
+        linked_ids = set(ootd.get("linked_item_ids") or [])
+        item_ids = ootd.get("item_ids") or []
+        image_path = ootd.get("image_path")
+
+        item_lines = []
+        for i_id in item_ids:
+            g = get_garment_by_id(i_id)
+            if g:
+                desc = _format_item_title(g.get("sub_category") or "piece", g.get("color") or "", g.get("brand"))
+                cat = g.get("category") or ""
+                emoji = _get_category_emoji(cat)
+            else:
+                desc = "clothing piece"
+                emoji = "👗"
+            safe_desc = escape_markdown(desc, version=1)
+            if i_id in linked_ids:
+                item_lines.append(f"• 🔗 [Linked Duplicate] *{i_id}*: {safe_desc}")
+            else:
+                item_lines.append(f"• {emoji} *{i_id}*: {safe_desc}")
+
+        items_text = "\n".join(item_lines) if item_lines else "• _No items tagged_"
+        safe_occ = escape_markdown(occasion, version=1)
+        caption = (
+            f"📸 *OOTD #{outfit_id}* — _{safe_occ}_{f' ({date_str})' if date_str else ''}\n\n"
+            f"{items_text}"
+        )
+
+        card_buttons = [
+            [InlineKeyboardButton(f"🔗 Link Item from OOTD #{outfit_id}", callback_data=f"ootd_link_{outfit_id}")],
+            [InlineKeyboardButton("🗑️ Delete OOTD", callback_data=f"ootd_del_{outfit_id}")],
+        ]
+        reply_markup = InlineKeyboardMarkup(card_buttons)
+
+        sent_photo = False
+        if image_path:
+            resolved = resolve_image_path(image_path)
+            if resolved and resolved.is_file():
+                try:
+                    with open(resolved, "rb") as f:
+                        await context.bot.send_photo(
+                            chat_id=query.message.chat_id,
+                            photo=f,
+                            caption=caption[:1024],
+                            parse_mode=ParseMode.MARKDOWN,
+                            reply_markup=reply_markup,
+                        )
+                    sent_photo = True
+                except Exception:
+                    logger.exception("Failed to send photo for OOTD #%s", outfit_id)
+
+        if not sent_photo:
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=caption,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup,
+            )
+
+    await query.message.reply_text(
+        f"📸 *OOTD Gallery ({len(ootds)} outfits)*\nTap a button above to link duplicates or delete an outfit.",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Categories", callback_data="wardrobe_menu")]]),
     )
 
 
@@ -247,7 +358,7 @@ def _sort_garments_by_item_id(garments: list[dict[str, Any]]) -> list[dict[str, 
 
 
 def _wardrobe_category_menu_keyboard(category: str) -> InlineKeyboardMarkup:
-    """Build the clean 3-action keyboard for a wardrobe category."""
+    """Build the clean 4-action keyboard for a wardrobe category."""
     return InlineKeyboardMarkup([
         [
             InlineKeyboardButton("✏️ Edit Item", callback_data=f"wardrobe_act_edit_{category}"),
@@ -255,6 +366,7 @@ def _wardrobe_category_menu_keyboard(category: str) -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton("🧺 Laundry Status", callback_data=f"wardrobe_act_laun_{category}"),
+            InlineKeyboardButton("🔗 Link Duplicate", callback_data=f"wardrobe_act_link_{category}"),
         ],
         [
             InlineKeyboardButton("⬅️ Back to Categories", callback_data="wardrobe_menu"),
@@ -311,6 +423,22 @@ def _build_wardrobe_laundry_keyboard(garments: list[dict[str, Any]], category: s
         buttons.append([InlineKeyboardButton(f"{icon} {item_id}: {desc} ({status_text})", callback_data=f"wardrobe_dolaun_{item_id}_{category}")])
     cat_title = "Wardrobe" if category == "all" else category.replace("_", " ").title()
     buttons.append([InlineKeyboardButton(f"🧼 Mark All {cat_title} as Clean", callback_data=f"wardrobe_cleanall_{category}")])
+    buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"wardrobe_back_cat_{category}")])
+    return InlineKeyboardMarkup(buttons)
+
+
+def _build_wardrobe_link_source_keyboard(garments: list[dict[str, Any]], category: str) -> InlineKeyboardMarkup:
+    """Build item-selection buttons for choosing an item to link as a duplicate."""
+    sorted_garments = _sort_garments_by_item_id(garments)
+    buttons: list[list[InlineKeyboardButton]] = []
+    for g in sorted_garments:
+        item_id = g["item_id"]
+        desc = _format_item_title(
+            g.get("sub_category") or "item",
+            g.get("color") or "",
+            g.get("brand"),
+        )
+        buttons.append([InlineKeyboardButton(f"🔗 {item_id}: {desc}", callback_data=f"wlink_src_{item_id}")])
     buttons.append([InlineKeyboardButton("⬅️ Back", callback_data=f"wardrobe_back_cat_{category}")])
     return InlineKeyboardMarkup(buttons)
 
@@ -819,10 +947,18 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     # Handle OOTD Occasion Learning:
     if context.user_data is not None and "pending_ootd_combo" in context.user_data:
         item_ids = context.user_data.pop("pending_ootd_combo")
+        linked_item_ids = context.user_data.pop("pending_ootd_linked", [])
+        ootd_image_path = context.user_data.pop("pending_ootd_image", None)
         is_pool = bool(context.user_data.get(_POOL_MODE_KEY)) if context.user_data else False
         target_user_id = POOL_USER_ID if is_pool else str(user.id)
         occasion_text = message.text.strip()
-        save_user_outfit(target_user_id, occasion_text, item_ids)
+        save_user_outfit(
+            target_user_id,
+            occasion_text,
+            item_ids,
+            linked_item_ids=linked_item_ids,
+            image_path=ootd_image_path,
+        )
         formatted_ids = ", ".join(f"`{i}`" for i in item_ids)
         safe_occ = escape_markdown(occasion_text, version=1)
         await message.reply_text(
@@ -1087,47 +1223,29 @@ def _verification_keyboard(
     count = len(items)
 
     det = detected_links or {}
-    act = active_links if active_links is not None else det
+    act = active_links if active_links is not None else det.copy()
 
+    # 1. Per-Item Duplicate Toggles (Never auto-confirms; updates state in-place)
     if det:
-        if len(det) == 1:
-            i_id, saved_id = next(iter(det.items()))
+        for i_id, saved_id in det.items():
             if i_id in act:
-                rows.append([
-                    InlineKeyboardButton(f"🔗 Link {i_id} → {saved_id}", callback_data=f"confirm_apply_{capture_id}"),
-                    InlineKeyboardButton("➕ Keep as New", callback_data=f"confirm_{capture_id}"),
-                ])
+                btn_text = f"✅ 🔗 Link {i_id} → {saved_id} (Tap to keep new)"
             else:
-                rows.append([
-                    InlineKeyboardButton(f"➕ Keep {i_id} as New", callback_data=f"confirm_{capture_id}"),
-                    InlineKeyboardButton(f"🔗 Link {i_id} → {saved_id}", callback_data=f"confirm_apply_{capture_id}"),
-                ])
-            rows.append([InlineKeyboardButton("✅ Confirm All", callback_data=f"confirm_apply_{capture_id}")])
-        else:
-            # Multiple duplicate candidates across the upload/OOTD
-            for i_id, saved_id in det.items():
-                if i_id in act:
-                    btn_text = f"✅ 🔗 Link {i_id} → {saved_id} (Tap to keep new)"
-                else:
-                    btn_text = f"➕ {i_id}: Keep as New (Tap to link)"
-                rows.append([InlineKeyboardButton(btn_text, callback_data=f"confirm_toggle_{i_id}_{capture_id}")])
+                btn_text = f"➕ {i_id}: Keep as New (Tap to link)"
+            rows.append([InlineKeyboardButton(btn_text, callback_data=f"confirm_toggle_{i_id}_{capture_id}")])
 
-            rows.append([
-                InlineKeyboardButton("✅ Confirm Selections", callback_data=f"confirm_apply_{capture_id}"),
-                InlineKeyboardButton("➕ Keep All as New", callback_data=f"confirm_{capture_id}"),
-            ])
-    elif has_duplicates:
-        rows.append(
-            [
-                InlineKeyboardButton("🔗 Link Duplicates", callback_data=f"confirm_apply_{capture_id}"),
-                InlineKeyboardButton("➕ Keep as New", callback_data=f"confirm_{capture_id}"),
-            ]
-        )
-        rows.append([InlineKeyboardButton("✅ Confirm All", callback_data=f"confirm_{capture_id}")])
+    # 2. Main Confirmation Action Row
+    if det or has_duplicates:
+        rows.append([
+            InlineKeyboardButton(f"✅ Confirm & Save ({count} item{'s' if count > 1 else ''})", callback_data=f"confirm_apply_{capture_id}"),
+            InlineKeyboardButton("➕ Keep All as New", callback_data=f"confirm_{capture_id}"),
+        ])
     else:
-        rows.append([InlineKeyboardButton(f"✅ Confirm All ({count} item{'s' if count > 1 else ''})", callback_data=f"confirm_{capture_id}")])
+        rows.append([
+            InlineKeyboardButton(f"✅ Confirm & Save ({count} item{'s' if count > 1 else ''})", callback_data=f"confirm_{capture_id}")
+        ])
 
-    # Granular Item-Specific Edit Buttons (2 per row)
+    # 3. Granular Item-Specific Edit Buttons (Always available! 2 per row)
     if items:
         edit_buttons = [
             InlineKeyboardButton(f"✏️ Edit {i_id}", callback_data=f"edititem_{i_id}")
@@ -1136,8 +1254,9 @@ def _verification_keyboard(
         for i in range(0, len(edit_buttons), 2):
             rows.append(edit_buttons[i:i + 2])
 
+    # 4. Manual Duplicate Linking & Discard
     rows.append([
-        InlineKeyboardButton("🔗 Already in Wardrobe", callback_data=f"manlink_start_{capture_id}"),
+        InlineKeyboardButton("🔗 Manual Duplicate Link", callback_data=f"manlink_start_{capture_id}"),
         InlineKeyboardButton("🗑️ Discard", callback_data=f"delete_{capture_id}"),
     ])
     return InlineKeyboardMarkup(rows)
@@ -1517,6 +1636,9 @@ async def verification_callback_handler(
     # A. Wardrobe Category Navigation Callbacks
     if query.data.startswith("wardrobe_cat_"):
         cat = query.data.removeprefix("wardrobe_cat_")
+        if cat == "ootd":
+            await _send_wardrobe_ootd_view(query, context, user_id)
+            return
         await _send_wardrobe_category_view(query, context, user_id, cat)
         return
 
@@ -1526,6 +1648,7 @@ async def verification_callback_handler(
 
     if query.data == "wardrobe_menu":
         garments = get_user_garments(user_id, verified_only=True)
+        ootds = get_user_outfits(user_id, limit=100)
         by_cat: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for g in garments:
             by_cat[g.get("category") or "top"].append(g)
@@ -1535,16 +1658,18 @@ async def verification_callback_handler(
         outer_cnt = len(by_cat.get("outerwear", []))
         shoes_cnt = len(by_cat.get("footwear", []))
         acc_cnt = len(by_cat.get("accessory", []))
+        ootd_cnt = len(ootds)
 
         title_header = "👚 *Test Pool Wardrobe*" if is_pool else "👚 *Your Wardrobe*"
         summary = (
-            f"{title_header} ({len(garments)} verified items)\n\n"
+            f"{title_header} ({len(garments)} verified items, {ootd_cnt} OOTDs)\n\n"
             f"• 👕 *Tops*: {tops_cnt}\n"
             f"• 👖 *Bottoms*: {bots_cnt}\n"
             f"• 🧥 *Outerwear*: {outer_cnt}\n"
             f"• 👟 *Footwear*: {shoes_cnt}\n"
-            f"• 🎒 *Accessories*: {acc_cnt}\n\n"
-            "Tap a category below to browse photos, delete items, or manage laundry:"
+            f"• 🎒 *Accessories*: {acc_cnt}\n"
+            f"• 📸 *OOTDs*: {ootd_cnt}\n\n"
+            "Tap a category below to browse photos, link duplicates, delete items, or manage laundry:"
         )
         keyboard = InlineKeyboardMarkup([
             [
@@ -1557,7 +1682,11 @@ async def verification_callback_handler(
             ],
             [
                 InlineKeyboardButton(f"🎒 Accessories ({acc_cnt})", callback_data="wardrobe_cat_accessory"),
+                InlineKeyboardButton(f"📸 OOTDs ({ootd_cnt})", callback_data="wardrobe_cat_ootd"),
+            ],
+            [
                 InlineKeyboardButton(f"🖼️ View All ({len(garments)})", callback_data="wardrobe_all"),
+                InlineKeyboardButton("🔗 Link Duplicate", callback_data="wardrobe_link_pick_source"),
             ],
             [
                 InlineKeyboardButton("⚠️ Clear Entire Wardrobe", callback_data="wardrobe_clear_ask"),
@@ -1787,7 +1916,7 @@ async def verification_callback_handler(
         )
         return
 
-    # 8. Action: Return to Category 3-Button Menu
+    # 8. Action: Return to Category Menu
     if query.data.startswith("wardrobe_back_cat_") or query.data.startswith("w_back_cat_"):
         cat = query.data.removeprefix("wardrobe_back_cat_").removeprefix("w_back_cat_")
         cat_filter = None if cat == "all" else cat
@@ -1795,9 +1924,188 @@ async def verification_callback_handler(
         clean_cat_title = "Wardrobe" if cat == "all" else cat.replace("_", " ").title()
         safe_cat_title = escape_markdown(clean_cat_title, version=1)
         await query.edit_message_text(
-            f"⚙️ *Manage {safe_cat_title} ({len(garments)} items):*\nChoose an action below to edit, delete, or update laundry status:",
+            f"⚙️ *Manage {safe_cat_title} ({len(garments)} items):*\nChoose an action below to edit, delete, link duplicates, or update laundry status:",
             parse_mode=ParseMode.MARKDOWN,
             reply_markup=_wardrobe_category_menu_keyboard(cat),
+        )
+        return
+
+    # 9. Action: Duplicate Linking Menu from Wardrobe Main
+    if query.data == "wardrobe_link_pick_source":
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("👕 Tops", callback_data="wardrobe_act_link_top"),
+                InlineKeyboardButton("👖 Bottoms", callback_data="wardrobe_act_link_bottom"),
+            ],
+            [
+                InlineKeyboardButton("🧥 Outerwear", callback_data="wardrobe_act_link_outerwear"),
+                InlineKeyboardButton("👟 Footwear", callback_data="wardrobe_act_link_footwear"),
+            ],
+            [
+                InlineKeyboardButton("🎒 Accessories", callback_data="wardrobe_act_link_accessory"),
+                InlineKeyboardButton("📸 From OOTDs", callback_data="wardrobe_cat_ootd"),
+            ],
+            [
+                InlineKeyboardButton("🖼️ All Items", callback_data="wardrobe_act_link_all"),
+            ],
+            [
+                InlineKeyboardButton("⬅️ Back to Categories", callback_data="wardrobe_menu"),
+            ],
+        ])
+        await query.message.reply_text(
+            "🔗 *Link Duplicate Item:*\nSelect which category the duplicate item belongs to:",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=keyboard,
+        )
+        return
+
+    # 10. Action: Select Source Item for Linking from Category
+    if query.data.startswith("wardrobe_act_link_") or query.data.startswith("w_act_link_"):
+        cat = query.data.removeprefix("wardrobe_act_link_").removeprefix("w_act_link_")
+        cat_filter = None if cat == "all" else cat
+        garments = get_user_garments(user_id, verified_only=True, category=cat_filter)
+        clean_cat_title = "Wardrobe" if cat == "all" else cat.replace("_", " ").title()
+        safe_cat_title = escape_markdown(clean_cat_title, version=1)
+        if not garments:
+            await query.edit_message_text(
+                f"No items found in *{safe_cat_title}* to link.",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back", callback_data=f"wardrobe_back_cat_{cat}")]])
+            )
+            return
+        keyboard = _build_wardrobe_link_source_keyboard(garments, cat)
+        await query.edit_message_text(
+            f"🔗 *Link Duplicate Item ({safe_cat_title}):*\nTap the item that you want to link as a duplicate of an existing piece:",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=keyboard,
+        )
+        return
+
+    # 11. Action: Select Target Item to Merge into
+    if query.data.startswith("wlink_src_"):
+        src_id = query.data.removeprefix("wlink_src_")
+        src_g = get_garment_by_id(src_id)
+        if not src_g or src_g.get("user_id") not in allowed_user_ids:
+            await query.message.reply_text("This item is no longer available.")
+            return
+
+        src_cat = src_g.get("category") or "top"
+        src_desc = _format_item_title(
+            src_g.get("sub_category") or "piece",
+            src_g.get("color") or "",
+            src_g.get("brand"),
+        )
+        safe_src_desc = escape_markdown(src_desc, version=1)
+
+        candidates = [g for g in get_user_garments(user_id, verified_only=True, category=src_cat) if g["item_id"] != src_id]
+        if not candidates:
+            candidates = [g for g in get_user_garments(user_id, verified_only=True) if g["item_id"] != src_id]
+
+        if not candidates:
+            await query.message.reply_text(
+                f"No other items found in your wardrobe to merge `{src_id}` into.",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ Back to Wardrobe", callback_data="wardrobe_menu")]]),
+            )
+            return
+
+        buttons = []
+        for tgt_g in candidates:
+            tgt_id = tgt_g["item_id"]
+            tgt_desc = _format_item_title(
+                tgt_g.get("sub_category") or "piece",
+                tgt_g.get("color") or "",
+                tgt_g.get("brand"),
+            )
+            buttons.append([InlineKeyboardButton(f"🔗 Merge into {tgt_id}: {tgt_desc}", callback_data=f"wlink_tgt_{src_id}_{tgt_id}")])
+        buttons.append([InlineKeyboardButton("❌ Cancel", callback_data="wardrobe_menu")])
+
+        await query.message.reply_text(
+            f"🔗 *Link Duplicate: `{src_id}` ({safe_src_desc})*\n\n"
+            f"Select the existing wardrobe item that this piece is a duplicate of.\n"
+            f"All photo appearances and outfit history from `{src_id}` will be merged into the target item:\n",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
+        return
+
+    # 12. Action: Execute Garment Merge
+    if query.data.startswith("wlink_tgt_"):
+        parts = query.data.split("_")
+        src_id = parts[2]
+        tgt_id = parts[3]
+        src_g = get_garment_by_id(src_id)
+        tgt_g = get_garment_by_id(tgt_id)
+        if not src_g or not tgt_g:
+            await query.message.reply_text("One of the selected items is no longer available.")
+            return
+
+        target_uid = tgt_g.get("user_id") or user_id
+        ok = link_garment_to_existing(
+            new_item_id=src_id,
+            existing_item_id=tgt_id,
+            user_id=target_uid,
+            image_path=src_g.get("image_path"),
+            user_caption=src_g.get("user_caption"),
+        )
+        if ok:
+            t_desc = _format_item_title(
+                tgt_g.get("sub_category") or "piece",
+                tgt_g.get("color") or "",
+                tgt_g.get("brand"),
+            )
+            safe_t_desc = escape_markdown(t_desc, version=1)
+            await query.message.reply_text(
+                f"✅ *Successfully Linked Duplicate!*\n\n"
+                f"`{src_id}` has been merged into `{tgt_id}` ({safe_t_desc}).\n\n"
+                f"All photo appearances, wear records, and OOTD references have been unified under `{tgt_id}`.",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("👚 Back to Wardrobe", callback_data="wardrobe_menu")]]),
+            )
+        else:
+            await query.message.reply_text("⚠️ Could not link items. Please try again.")
+        return
+
+    # 13. OOTD Management Callbacks
+    if query.data.startswith("ootd_del_"):
+        outfit_id = int(query.data.removeprefix("ootd_del_"))
+        deleted = delete_user_outfit(outfit_id, user_id)
+        if deleted:
+            await query.message.reply_text(
+                f"🗑️ Deleted OOTD #{outfit_id}.",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("📸 Back to OOTDs", callback_data="wardrobe_cat_ootd")],
+                    [InlineKeyboardButton("⬅️ Back to Wardrobe", callback_data="wardrobe_menu")],
+                ]),
+            )
+        else:
+            await query.message.reply_text("⚠️ Could not delete OOTD.")
+        return
+
+    if query.data.startswith("ootd_link_"):
+        outfit_id = int(query.data.removeprefix("ootd_link_"))
+        ootd = get_user_outfit_by_id(outfit_id, user_id)
+        if not ootd:
+            await query.message.reply_text("OOTD record not found.")
+            return
+
+        item_ids = ootd.get("item_ids") or []
+        if not item_ids:
+            await query.message.reply_text("No items tagged in this OOTD to link.")
+            return
+
+        buttons = []
+        for i_id in item_ids:
+            g = get_garment_by_id(i_id)
+            desc = _format_item_title(g.get("sub_category") or "piece", g.get("color") or "", g.get("brand")) if g else "piece"
+            emoji = _get_category_emoji(g.get("category") if g else None)
+            buttons.append([InlineKeyboardButton(f"{emoji} {i_id}: {desc}", callback_data=f"wlink_src_{i_id}")])
+        buttons.append([InlineKeyboardButton("⬅️ Back to OOTDs", callback_data="wardrobe_cat_ootd")])
+
+        await query.message.reply_text(
+            f"Select which item from *OOTD #{outfit_id}* you want to link to an existing wardrobe piece:",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup(buttons),
         )
         return
 
@@ -1881,6 +2189,9 @@ async def verification_callback_handler(
                 ],
                 [
                     InlineKeyboardButton("🎒 Accessories", callback_data=f"manlink_cat_{item_id}_accessory"),
+                    InlineKeyboardButton("📸 OOTDs", callback_data=f"manlink_cat_{item_id}_ootd"),
+                ],
+                [
                     InlineKeyboardButton("❌ Cancel", callback_data=f"confirm_{capture_id}"),
                 ],
             ])
@@ -1919,6 +2230,7 @@ async def verification_callback_handler(
             ],
             [
                 InlineKeyboardButton("🎒 Accessories", callback_data=f"manlink_cat_{item_id}_accessory"),
+                InlineKeyboardButton("📸 OOTDs", callback_data=f"manlink_cat_{item_id}_ootd"),
             ],
         ])
         await query.message.reply_text(
@@ -1932,6 +2244,30 @@ async def verification_callback_handler(
         parts = query.data.split("_")
         item_id = parts[2]
         cat = parts[3]
+        if cat == "ootd":
+            ootds = get_user_outfits(user_id, limit=50)
+            if not ootds:
+                await query.message.reply_text("You don't have any saved OOTDs yet.")
+                return
+            buttons = []
+            for ootd in ootds:
+                oid = ootd["outfit_id"]
+                occ = ootd.get("occasion") or "OOTD"
+                for g_id in ootd.get("item_ids") or []:
+                    g = get_garment_by_id(g_id)
+                    if g:
+                        desc = _format_item_title(g.get("sub_category") or "piece", g.get("color") or "", g.get("brand"))
+                        buttons.append([InlineKeyboardButton(f"📸 OOTD #{oid} ({occ}) ➡️ {g_id}: {desc}", callback_data=f"manlink_do_{item_id}_{g_id}")])
+            if not buttons:
+                await query.message.reply_text("No items found in saved OOTDs.")
+                return
+            await query.message.reply_text(
+                f"Select which saved OOTD piece corresponds to `{item_id}`:",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=InlineKeyboardMarkup(buttons),
+            )
+            return
+
         garments = get_user_garments(user_id, verified_only=True, category=cat)
         cat_title = escape_markdown(cat.title(), version=1)
         if not garments:
@@ -2079,6 +2415,7 @@ async def verification_callback_handler(
                     )
                     linked_count += 1
                     final_item_ids.append(existing_item_id)
+                    linked_ids_list.append(existing_item_id)
                 except ValueError:
                     logger.warning("Could not link duplicate %s", i_id)
                     final_item_ids.append(i_id)
@@ -2094,6 +2431,8 @@ async def verification_callback_handler(
         is_ootd = any(g.get("source_type") == "ootd" for g in garments)
         if is_ootd and context.user_data is not None:
             context.user_data["pending_ootd_combo"] = final_item_ids
+            context.user_data["pending_ootd_linked"] = linked_ids_list
+            context.user_data["pending_ootd_image"] = garments[0]["image_path"] if garments else None
             msg = (
                 f"✅ Linked {linked_count} duplicate item(s); remaining items added to your wardrobe!\n\n"
                 if linked_count > 0
@@ -2133,6 +2472,8 @@ async def verification_callback_handler(
         is_ootd = any(g.get("source_type") == "ootd" for g in garments)
         if is_ootd and context.user_data is not None:
             context.user_data["pending_ootd_combo"] = [g["item_id"] for g in garments]
+            context.user_data["pending_ootd_linked"] = []
+            context.user_data["pending_ootd_image"] = garments[0]["image_path"] if garments else None
             await query.edit_message_text(
                 f"✅ {len(garments)} item(s) confirmed and added to your wardrobe!\n\n"
                 "✨ *What occasion did you wear this outfit for?*\n"
