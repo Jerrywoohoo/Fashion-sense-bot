@@ -19,6 +19,7 @@ __pycache__/
 # data/images/*
 
 
-# Operating System
+# Operating System & IDE
 .DS_Store
 Thumbs.db
+.vscode/
