@@ -36,9 +36,13 @@ Copy `.env.example` to create your active `.env` file:
 cp .env.example .env
 ```
 
+> [!TIP]
+> **Pre-Configured Telegram Bot Token Provided**:  
+> To save you the hassle of creating a new bot via `@BotFather`, **we have included our active Telegram Bot Token as a text file in the submission package** (e.g. `bot_token.txt` / submission credentials). Simply copy-paste that token into `TELEGRAM_BOT_TOKEN` in your `.env`!
+
 Ensure your `.env` contains your API credentials:
 ```env
-# Required: Telegram Bot Token from @BotFather
+# Required: Telegram Bot Token (paste the token from the submission text file)
 TELEGRAM_BOT_TOKEN=your_bot_token_here
 
 # Required: AWS Bedrock Credentials (Vision & Stylist)
