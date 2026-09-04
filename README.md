@@ -1,25 +1,92 @@
 # 👗 AI Stylist & Smart Wardrobe Manager
 
-> **An Agentic AI personal styling assistant delivered over Telegram.**
-> Features multimodal vision intake, human-in-the-loop refinement, conservative duplicate detection, interactive user profiling, and a LangGraph-driven contextual styling engine powered by live weather, real-time web trends, outfit history RAG, and deterministic color/proportion matrices.
+> **An Agentic AI personal styling assistant delivered over Telegram.**  
+> Built with multimodal vision intake, human-in-the-loop refinement, conservative duplicate detection, interactive body profiling, and a stateful **LangGraph** styling engine powered by live weather (Open-Meteo), real-time web trends (DuckDuckGo `ddgs`), outfit history RAG, and deterministic color/proportion matrices.
 
 ---
 
-## 📑 Table of Contents
-1. [Methodology & Functional Overview](#-1-methodology--functional-overview)
-2. [Technical Architecture](#-2-technical-architecture)
-3. [Project Directory & File Purpose Map](#-3-project-directory--file-purpose-map)
-4. [Tech Stack & Dependencies](#-4-tech-stack--dependencies)
-5. [Environment Setup & Installation](#-5-environment-setup--installation)
-6. [Execution & Judge Evaluation Guide](#-6-execution--judge-evaluation-guide)
-7. [Automated Test Suite](#-7-automated-test-suite)
-8. [VS Code to GitHub Upload Guide](#-8-vs-code-to-github-upload-guide)
+## 🧑‍⚖️ Execution & Judge Evaluation Guide
+
+To evaluate the solution immediately without spending time photographing and uploading 10+ garments, the bot includes a pre-seeded **Admin Test Pool Mode** with clean, pre-categorized clothing items.
+
+### ⚡ Quick Start: Zero-Friction Judge Mode
+1. Open the bot on Telegram and start the conversation with `/start`.
+2. Send **`/admintest`** to enter Judge Mode.
+3. When prompted, enter the demo password:
+   ```text
+   demo123
+   ```
+4. You are now in **Shared Pool Mode** (`POOL_TEST_USER`):
+   - Type **`/wardrobe`** to inspect the pre-seeded digital wardrobe across Tops, Bottoms, Outerwear, Footwear, and Accessories.
+   - Type **`/style dinner date in Tokyo`** or **`/style rainy office day in London`** to test the live Weather RAG, DuckDuckGo web trends, and LangGraph outfit assembly.
+   - Test granular actions under outfits: tap `🧺 Item in Laundry` to test wardrobe rotation exclusions, or `🔄 More Options` for alternative looks.
+5. When finished, send **`/adminlive`** to return to your private session.
 
 ---
 
-## 🌟 1. Methodology & Functional Overview
+### 🎮 Available Telegram Commands
 
-The system addresses the cognitive friction of everyday dressing by converting casual clothing photos into a digital inventory and generating personalized, context-aware outfit recommendations.
+| Command | Description |
+| :--- | :--- |
+| **`/admintest`** | **Judge Evaluation**: Switches to shared test wardrobe pre-seeded with items (Password: `demo123`) |
+| **`/style [occasion] [location]`** | Triggers LangGraph styling engine with live weather RAG & web fashion trends |
+| **`/wardrobe`** | Interactive 2-step digital wardrobe with badged previews, edit, delete, and laundry controls |
+| **`/profile`** | 7-step onboarding wizard (body build, proportions, preferred silhouettes, thermal bias) |
+| **`/laundry`** | View dirty laundry hamper and toggle items clean |
+| **`/delete`** | Delete individual items or execute a safe 2-step complete wardrobe reset |
+| **`/adminlive`** | Exits judge pool mode and returns to your isolated private wardrobe |
+| **`/cancel`** | Aborts any active prompt, intake correction, or conversation flow |
+
+---
+
+## ⚙️ Environment Setup & Installation
+
+### 1. Prerequisites & Virtual Environment
+```bash
+# Clone the repository
+git clone https://github.com/Jerrywoohoo/Fashion-sense-bot.git
+cd Fashion-sense-bot
+
+# Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 2. Configuration (`.env`)
+Copy `.env.example` to `.env` and fill in credentials:
+```bash
+cp .env.example .env
+```
+
+```env
+# Required: Telegram Bot Token from @BotFather
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+
+# Required: AWS Bedrock Credentials (Vision & Stylist)
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+# Set AWS_SESSION_TOKEN only if using temporary session keys (AWS SSO / Academy):
+AWS_SESSION_TOKEN=
+AWS_DEFAULT_REGION=us-east-1
+
+# Persistence & Judge Access
+DATABASE_PATH=data/wardrobe.db
+ADMIN_TEST_PASSWORD=demo123
+```
+
+### 3. Launch the Bot
+```bash
+python bot.py
+```
+*Stop anytime with `Ctrl+C` — the bot shuts down gracefully via signal handling.*
+
+---
+
+## 🌟 Methodology & Functional Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -27,297 +94,155 @@ The system addresses the cognitive friction of everyday dressing by converting c
 ├──────────────────┬──────────────────┬──────────────────┬────────────────────┤
 │ 1. PHOTO INTAKE  │ 2. HITL REVIEW   │ 3. WARDROBE MGT  │ 4. AGENTIC STYLIST │
 │ • Single & OOTD  │ • Natural prompt │ • Clean 2-step   │ • Live Weather RAG │
-│ • Multi-piece    │ • Dual-check dup │ • 4-word badges  │ • DuckDuckGo Trends│
+│ • Multi-piece    │ • Granular dup   │ • 4-word badges  │ • DuckDuckGo Trends│
 │ • Bedrock Vision │ • Instant verify │ • Natural sort   │ • LangGraph Engine │
 └──────────────────┴──────────────────┴──────────────────┴────────────────────┘
 ```
 
-### Key Functional Capabilities:
-
 1. **Multimodal Vision Intake (`app/extractor.py`)**:
-   - Detects whether an image is a single clothing piece or a full **Outfit of the Day (OOTD)** containing multiple garments.
+   - Classifies uploads into single-item photos or full **Outfit of the Day (OOTD)** images.
    - Extracts structured Pydantic schemas: category, sub-category, primary/accent colors, silhouette fit, fabric weight, formality tier ($1-5$), seasonality, and styling tags.
    - Labels photos in memory with high-contrast, labeled visual badges using Pillow.
 
-2. **Human-in-the-Loop (HITL) Verification & Refinement (`app/handlers.py`)**:
-   - Extracted items are staged in an unverified state (`is_verified = 0`).
-   - Users can confirm with one tap or reply in plain language (e.g. *"the shirt is oversized navy linen, brand is Uniqlo"*), triggering an authoritative AI re-extraction.
+2. **Human-in-the-Loop (HITL) & Granular Duplicate Linking (`app/handlers.py`)**:
+   - Staged in unverified state (`is_verified = 0`) until user confirms or supplies natural-language revisions (e.g. *"the jacket is oversized charcoal wool"*).
+   - **Granular Per-Item Duplicate Selection**: When multiple items in an OOTD resemble existing clothes, users can toggle each item individually (e.g., link shirt to existing item, but keep pants as a brand-new piece).
 
-3. **Conservative Duplicate Detection & Smart Linking (`app/extractor.py`)**:
-   - Employs a dual-condition gate: candidates must match **both** garment category/silhouette and dominant color hue before checking visual perception hashing (pHash) and LLM confirmation.
-   - Prevents duplicate entries while letting users link new photos as fresh appearances of existing wardrobe pieces.
+3. **7-Step Profile Onboarding (`app/profile_flow.py`)**:
+   - Captures body build, proportions (e.g., long torso, broad shoulders), preferred silhouettes, and thermal preference (runs warm/cold).
 
-4. **Interactive Profile Onboarding (`app/profile_flow.py`)**:
-   - 7-step Telegram conversation handler capturing gender frame, height, weight, body build, proportions (e.g. long torso, broad shoulders), preferred silhouettes, and thermal preference (runs warm/cold).
+4. **Contextual Agentic Stylist Graph (`app/stylist_graph.py`)**:
+   - Multi-source RAG combining **live Open-Meteo weather**, **DuckDuckGo fashion trends (`ddgs`)**, **past outfit history**, and **48-hour anti-repeat rotation cooldown**.
+   - Enforces deterministic color harmony (monochromatic, complementary, analogous) and silhouette balance from `app/style_matrix.py`.
 
-5. **Contextual Agentic Stylist Graph (`app/stylist_graph.py`)**:
-   - **Weather RAG**: Live Open-Meteo forecasts for real-time temperature, rain probability, UV index, and apparent temperature.
-   - **Web Search RAG**: DuckDuckGo (`ddgs`) trend scraping for occasion-specific and location-relevant dress codes.
-   - **Outfit History RAG**: Vector/SQL lookups of past worn outfits for similar occasions.
-   - **Anti-Repeat Wear Rotation**: Enforces a 48-hour cooldown on recently worn items.
-   - **Deterministic Style Matrix (`app/style_matrix.py`)**: Enforces color theory (monochromatic, complementary, analog) and silhouette balance (e.g. tight top + relaxed bottom).
-
-6. **Compact Wardrobe & Laundry Management (`/wardrobe`, `/laundry`)**:
-   - Clean 2-step menu displaying badged photo albums with **Edit**, **Delete**, and **Laundry** controls.
-   - 4-word display limit prevents UI overflows while preserving full, rich descriptions in SQLite for LLM reasoning.
+5. **2-Step Wardrobe & Laundry Management (`/wardrobe`, `/laundry`)**:
+   - Clean 2-step category navigation with badged photo albums and in-place Edit, Delete, and Laundry actions.
+   - 4-word badge display cap prevents chat UI overflow while SQLite retains unconstrained full descriptions for LLM reasoning.
    - Natural numeric sorting (`item_101`, `item_102`...) across all preview cards and buttons.
 
 ---
 
-## 🏗️ 2. Technical Architecture
+## 🏗️ Technical Architecture & LangGraph State Machine
+
+The solution decouples stateful bot routing and storage (**Google Cloud Platform Compute Engine**) from generative AI compute (**AWS Bedrock**):
 
 ```mermaid
 flowchart TD
-    subgraph Telegram Client
-        User([User on Telegram])
+    subgraph Telegram MTProto Layer
+        User([User on Telegram Mobile / Desktop])
     end
 
-    subgraph Bot Application Layer
+    subgraph Google Cloud Platform [GCP Compute Host]
         Bot[bot.py: Application Router]
         Handlers[app/handlers.py: Command & Callback Handlers]
-        ProfileFlow[app/profile_flow.py: Profile Conversation]
-    end
-
-    subgraph Agentic AI Core
-        Extractor[app/extractor.py: Multimodal Vision Extractor]
+        ProfileFlow[app/profile_flow.py: Profile Wizard]
         StylistGraph[app/stylist_graph.py: LangGraph Orchestrator]
         StyleMatrix[app/style_matrix.py: Deterministic Rules Engine]
+        DB[(Persistent SQLite: data/wardrobe.db)]
+        Images[(Persistent Disk: data/images/)]
     end
 
-    subgraph External Services & RAG
-        Bedrock[AWS Bedrock: Amazon Nova Pro / Claude]
-        WeatherAPI[Open-Meteo API: Live Weather]
-        DDGS[DuckDuckGo Search: Live Fashion Trends]
+    subgraph Amazon Web Services [AWS Bedrock AI Backend]
+        NovaVision[Amazon Nova Pro: Multimodal Garment Extraction]
+        ClaudeStylist[Claude 3.5 / Nova: Stylist LLM Reasoning]
     end
 
-    subgraph Storage Layer
-        DB[(SQLite: data/wardrobe.db)]
-        Images[(Local Storage: data/images/)]
+    subgraph External RAG Providers
+        OpenMeteo[Open-Meteo API: Live Weather & Forecasts]
+        DDGS[DuckDuckGo Search: Real-Time Fashion Trends]
     end
 
-    User <-->|Telegram MTProto API| Bot
+    User <-->|Telegram API| Bot
     Bot --> Handlers
     Bot --> ProfileFlow
-    Handlers <--> Extractor
     Handlers <--> StylistGraph
     Handlers <--> DB
     Handlers <--> Images
     ProfileFlow <--> DB
     
-    Extractor <-->|Vision Inference| Bedrock
-    StylistGraph --> WeatherAPI
+    StylistGraph --> OpenMeteo
     StylistGraph --> DDGS
     StylistGraph --> StyleMatrix
     StylistGraph <--> DB
-    StylistGraph <-->|Converse API| Bedrock
+    
+    Handlers <-->|boto3 HTTPS| NovaVision
+    StylistGraph <-->|boto3 HTTPS| ClaudeStylist
 ```
 
-### Stylist Graph Node Flow:
+### LangGraph Stylist Node State Machine
 
-```
-[Start] ──> [candidate_fetch_node] (Weather RAG + Web Trends + History)
-                 │
-                 ▼
-            [trend_rules_node] (Deterministic Matrix + Thermal Adjustment)
-                 │
-                 ▼
-            [stylist_llm_node] (Bedrock Reasoning + Outfit Assembly)
-                 │
-                 ▼
-            [outfit_critique_node] (Rule Validation & Constraint Checks)
-                 │
-                 ├── (Pass) ──> [End: Structured Recommendation]
-                 └── (Fail) ──> [Retry / Adjust Candidates]
-```
-
----
-
-## 📂 3. Project Directory & File Purpose Map
-
-```
-.
-├── bot.py                  # Main entry point: registers handlers and starts Telegram polling
-├── requirements.txt        # Production dependency specifications
-├── .env.example            # Template for environment variables and secrets
-├── .gitignore              # Protects secrets (.env), local database, and user photos
-├── build_pdf.py            # Standalone generator for system_documentation.pdf
-├── README.md               # Project documentation
-│
-├── app/
-│   ├── __init__.py         # Package initialization
-│   ├── config.py           # Environment loader & Settings dataclass (.env parsing)
-│   ├── database.py         # SQLite schema, migrations, CRUD helpers, and wear history
-│   ├── extractor.py        # AWS Bedrock multimodal vision extraction, pHash & badges
-│   ├── handlers.py         # Main Telegram command handlers, intake & wardrobe callbacks
-│   ├── models.py           # Pydantic schemas (Garment, UserProfile, Recommendation)
-│   ├── paths.py            # Path resolver for database, storage, and image assets
-│   ├── profile_flow.py     # 7-step interactive /profile setup ConversationHandler
-│   ├── style_matrix.py     # Deterministic color theory, proportion & formality rules
-│   ├── stylist_graph.py    # LangGraph state machine orchestrating AI stylist workflow
-│   ├── weather.py          # Open-Meteo client for live temperature, rain & UV data
-│   └── web_search.py       # DuckDuckGo (ddgs) trend retriever for occasion context
-│
-├── data/
-│   ├── wardrobe.db         # Local SQLite database (created automatically)
-│   └── images/             # Stored user clothing photos (created automatically)
-│
-└── tests/
-    ├── test_admin_pool.py          # Tests for Admin Test Pool mode & keyboard builders
-    ├── test_batch_and_wardrobe.py  # Tests for batch intake & wardrobe CRUD
-    ├── test_duplicate_detection.py # Tests for pHash & dual-condition duplicate linking
-    └── test_intake_flow.py         # Tests for verification & plain-text corrections
+```mermaid
+flowchart TD
+    Start([User sends /style]) --> FetchNode[1. candidate_fetch_node]
+    
+    subgraph RAG Context Gathering
+        FetchNode --> Weather[Open-Meteo API: Temp, Rain, UV]
+        FetchNode --> Trends[DuckDuckGo ddgs: Live Trends]
+        FetchNode --> History[SQL RAG: Past Outfits & Preferences]
+        FetchNode --> Filter[SQL Filter: Clean items minus 48h Cooldown]
+    end
+    
+    Weather --> RulesNode[2. trend_rules_node]
+    Trends --> RulesNode
+    History --> RulesNode
+    Filter --> RulesNode
+    
+    subgraph Deterministic Rule Engine
+        RulesNode --> ColorHarmony[Color Harmony Wheel: Monochrome/Analog/Split]
+        RulesNode --> Proportions[Silhouette Balance: Fitted Top + Relaxed Bottom]
+        RulesNode --> Thermal[Thermal Adjustment: User Warm/Cold Bias]
+    end
+    
+    ColorHarmony --> LLMNode[3. stylist_llm_node]
+    Proportions --> LLMNode
+    Thermal --> LLMNode
+    
+    subgraph Multimodal LLM Reasoning
+        LLMNode --> BedrockConverse[AWS Bedrock Nova Pro / Claude]
+        BedrockConverse --> Assemble[Outfit Assembly & Style Rationale]
+    end
+    
+    Assemble --> CritiqueNode[4. outfit_critique_node]
+    
+    subgraph Validation & Self-Critique Loop
+        CritiqueNode -- Valid --> Output([Send Badged Outfit Photos & Actions])
+        CritiqueNode -- Invalid / Missing Item --> Retry[Deterministic Fallback / Retry]
+        Retry --> Output
+    end
 ```
 
 ---
 
-## 💻 4. Tech Stack & Dependencies
+## 📂 Project Directory & File Purpose Map
 
-| Layer | Technology | Purpose |
+| File / Module | Layer | Purpose |
 | :--- | :--- | :--- |
-| **Language** | Python 3.10+ / 3.12 | Core backend language |
-| **Bot Framework** | `python-telegram-bot` (v21+) | Async Telegram Bot API client |
-| **LLM & Vision** | AWS Bedrock (`amazon.nova-pro-v1:0` / Claude 3.5) | Multimodal extraction & style reasoning |
-| **Agentic Graph** | `langgraph` (v0.2+) | State graph orchestration & self-critique loop |
-| **Data Validation**| `pydantic` (v2.5+) | Type safety and JSON schema validation |
-| **Database** | SQLite 3 (`sqlite3`) | Lightweight local relational persistence |
-| **Image Processing**| `Pillow` (PIL v10+) | Resizing, pHash perception hashing, image badges |
-| **Web Search RAG** | `duckduckgo-search` / `ddgs` | Live dress code and style trend retrieval |
-| **Weather API** | Open-Meteo API | Free, keyless live weather & forecast retrieval |
+| [`bot.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/bot.py) | Entrypoint | Builds Telegram Application, registers command/callback handlers, runs polling |
+| [`app/config.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/config.py) | Config | Loads `.env` credentials, parses `Settings` dataclass, validates API keys |
+| [`app/database.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/database.py) | Persistence | SQLite connection wrapper, schema migrations, and CRUD helper queries |
+| [`app/extractor.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/extractor.py) | Vision / AI | AWS Bedrock vision extraction, 64-bit pHash comparison, and photo badge labeling |
+| [`app/handlers.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/handlers.py) | Controller | Telegram commands (`/wardrobe`, `/style`, `/laundry`), intake debouncing, callbacks |
+| [`app/models.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/models.py) | Contracts | Pydantic v2 schemas (`ExtractedGarment`, `UserProfile`, `OutfitRecommendation`) |
+| [`app/paths.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/paths.py) | Filesystem | Path resolver for database, persistent storage, and image assets |
+| [`app/profile_flow.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/profile_flow.py) | Wizard | 7-step interactive `/profile` ConversationHandler |
+| [`app/style_matrix.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/style_matrix.py) | Rule Engine | Deterministic color theory, proportion matrix, and offline fallback stylist |
+| [`app/stylist_graph.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/stylist_graph.py) | Agent Core | LangGraph state machine executing RAG context $\rightarrow$ LLM stylist $\rightarrow$ critique loop |
+| [`app/weather.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/weather.py) | RAG Tool | Open-Meteo REST client for real-time temperature, precipitation, and UV data |
+| [`app/web_search.py`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/app/web_search.py) | RAG Tool | DuckDuckGo (`ddgs`) trend retriever for occasion-specific fashion context |
+| [`data/wardrobe.db`](file:///Volumes/Jerry_SSD%201/Work/AI-work/Fashion-sense/data/wardrobe.db) | Data | SQLite database containing pre-seeded demo wardrobe items for judge testing |
 
 ---
 
-## ⚙️ 5. Environment Setup & Installation
+## 🧪 Automated Test Suite
 
-### Step 1: Clone the Repository
-```bash
-git clone https://github.com/your-username/fashion-sense.git
-cd fashion-sense
-```
-
-### Step 2: Create and Activate Virtual Environment
-```bash
-# macOS / Linux
-python3 -m venv .venv
-source .venv/bin/activate
-
-# Windows (Command Prompt / PowerShell)
-python -m venv .venv
-.venv\Scripts\activate
-```
-
-### Step 3: Install Dependencies
-```bash
-pip install --upgrade pip
-pip install -r requirements.txt
-```
-
-### Step 4: Configure Secrets (`.env`)
-Copy `.env.example` to `.env` and fill in your credentials:
-```bash
-cp .env.example .env
-```
-
-Edit `.env`:
-```env
-# Required: Telegram Bot Token from @BotFather
-TELEGRAM_BOT_TOKEN=123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ
-
-# Required: AWS Bedrock Credentials
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
-AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-# Set AWS_SESSION_TOKEN only if using temporary session keys (AWS SSO / Academy):
-AWS_SESSION_TOKEN=
-AWS_DEFAULT_REGION=us-east-1
-
-# Optional Settings
-DATABASE_PATH=data/wardrobe.db
-ADMIN_TEST_PASSWORD=demo123
-```
-
----
-
-## 🚀 6. Execution & Judge Evaluation Guide
-
-### Starting the Bot:
-```bash
-python bot.py
-```
-*The bot runs gracefully with live terminal logging. Stop anytime with `Ctrl+C`.*
-
-### Available Telegram Commands:
-
-| Command | Description |
-| :--- | :--- |
-| `/start` | Welcome message and interactive quick-start guide |
-| `/profile` | Interactive 7-step onboarding (body build, proportions, thermal preference) |
-| `/wardrobe` | Browse digital wardrobe with badged photos & 2-step management |
-| `/style` | Trigger AI stylist (e.g. `/style date night`, `/style wedding in Tokyo`) |
-| `/laundry` | Check dirty clothes hamper and mark items clean |
-| `/delete` | Remove items or reset wardrobe |
-| `/admintest` | **Judge Mode**: Enter shared test pool with pre-seeded wardrobe items |
-| `/adminlive` | Exit test pool and return to private user wardrobe |
-| `/cancel` | Cancel any ongoing operation or edit |
-
----
-
-### 🧑‍⚖️ Zero-Friction Judge Evaluation (Admin Pool Mode)
-
-To allow judges to test the styling capabilities immediately without having to photograph and upload 10+ items of clothing:
-
-1. Send `/admintest` to the bot on Telegram.
-2. Enter the demo password configured in `.env` (default: `demo123`).
-3. You will enter **Shared Pool Mode** (`POOL_TEST_USER`).
-4. Type `/wardrobe` to inspect the pre-seeded wardrobe, or type `/style dinner date` to evaluate the AI stylist immediately!
-5. When finished, send `/adminlive` to switch back to your own private session.
-
----
-
-## 🧪 7. Automated Test Suite
-
-The repository includes a comprehensive unit test suite covering database operations, vision parsing, duplicate detection, natural sorting, and callback interactions:
+The test suite covers database persistence, foreign key constraints, vision extraction schemas, duplicate detection, natural sorting, and callback interactions:
 
 ```bash
 # Run all unit tests:
 python -m unittest discover -s . -p "test_*.py"
 ```
 
-### Test Files Overview:
-- `test_admin_pool.py`: Verifies admin pool mode isolation, markdown escaping, and wardrobe keyboards.
-- `test_batch_and_wardrobe.py`: Verifies multi-photo batch intake, 4-word title caps, and category views.
-- `test_duplicate_detection.py`: Verifies pHash calculations and dual-condition duplicate matching.
-- `test_intake_flow.py`: Verifies HITL verification and single-item edit confirmations.
-
----
-
-## 📤 8. VS Code to GitHub Upload Guide
-
-Follow these steps to safely push this project to GitHub from Visual Studio Code without exposing your private `.env` secrets or database:
-
-### 1. Verify `.gitignore` is Active
-Ensure `.gitignore` contains `.env`, `data/*.db`, and `data/images/*`. Verify with:
-```bash
-git status
-```
-*(Make sure `.env` and `data/wardrobe.db` do NOT appear in the untracked files list).*
-
-### 2. Initialize and Commit in VS Code
-1. Open the **Source Control** tab in VS Code (`Ctrl+Shift+G` or `Cmd+Shift+G`).
-2. If not initialized, click **Initialize Repository**.
-3. Stage all files by clicking the **+** icon (Stage All Changes).
-4. Type a commit message (e.g. `feat: initial commit of AI Stylist bot`).
-5. Click **Commit** (or press `Cmd+Enter` / `Ctrl+Enter`).
-
-### 3. Create a Remote Repository & Push
-1. In VS Code, click **Publish Branch** (or **Publish to GitHub**).
-2. Choose **Publish to GitHub private repository** or **public repository**.
-3. Alternatively, via terminal:
-   ```bash
-   git remote add origin https://github.com/<your-username>/fashion-sense.git
-   git branch -M main
-   git push -u origin main
-   ```
-
----
-
-## 📄 License
-Developed for the AI Agent Hackathon. Distributed under the MIT License.
+- **`test_admin_pool.py`**: Verifies admin test pool isolation, markdown escaping, and wardrobe keyboards.
+- **`test_batch_and_wardrobe.py`**: Verifies multi-photo batch intake debouncing, 4-word title display caps, foreign key satisfaction, and category filtering.
+- **`test_duplicate_detection.py`**: Verifies 64-bit pHash calculations, hue similarity filters, and dual-condition linking.
+- **`test_intake_flow.py`**: Verifies HITL verification flow, single-item edits, and wardrobe navigation.
