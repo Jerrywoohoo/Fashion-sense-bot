@@ -63,14 +63,10 @@ ADMIN_TEST_PASSWORD=demo123
 
 > [!IMPORTANT]
 > **Evaluation Testing Database (`wardrobe.db`)**:  
-> We provide our pre-seeded evaluation database separately as a submission folder (`data/`) pre-populated with diverse garments across all categories.
+> We provide our pre-seeded evaluation database separately as a submission folder (`data/`)
 > 
-> 1. After accessing the provided `data/`
-> 2. Move or copy it into the `data/` directory of the project:
->    ```bash
->    mkdir -p data
->    mv /path/to/downloaded/data data/wardrobe.db
->    ```
+> 1. After accessing the provided `data/` in submitted file
+> 2. Move and replace into `data/` directory of the project:
 
 ---
 
