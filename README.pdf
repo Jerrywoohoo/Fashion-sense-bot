@@ -1,0 +1,820 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 3 0 R /Outlines 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Outlines /Count 0 >>
+endobj
+3 0 obj
+<< /Type /Pages /Count 5 /Kids [8 0 R 10 0 R 12 0 R 14 0 R 16 0 R] >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Length 3246 >>
+stream
+0.75 0.75 0.78 RG 0.5 w
+42.0 811.89 m 553.28 811.89 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 816.89 Td (AI Stylist & Smart Wardrobe Manager -- Project Documentation & Evaluation Guide) Tj ET
+BT /F2 15 Tf 0.10 0.15 0.25 rg
+42.0 793.89 Td (AI Stylist & Smart Wardrobe Manager -- README Documentation) Tj ET
+BT /F1 8.5 Tf 0.35 0.40 0.48 rg
+42.0 778.89 Td (Agentic AI personal styling assistant delivered over Telegram with LangGraph, Multimodal Vision, and Live RAG) Tj ET
+0.18 0.42 0.82 rg
+42.0 763.89 511.28 2.0 re f
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 739.89 Td (1. Project Executive Summary) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 735.89 m 553.28 735.89 l S
+BT /F1 8.0 Tf 0.15 0.15 0.18 rg
+42.0 726.89 Td
+(AI Stylist is an end-to-end agentic personal styling assistant delivered over Telegram. It transforms casual smartphone) Tj
+0 -10.5 Td
+(clothing photos into a structured digital wardrobe, incorporating Human-in-the-Loop \(HITL\) refinement, conservative) Tj
+0 -10.5 Td
+(dual-condition duplicate prevention, interactive body profiling, and a stateful LangGraph styling engine powered by live) Tj
+0 -10.5 Td
+(Open-Meteo weather, DuckDuckGo real-time fashion trends, past outfit history RAG, and deterministic color/proportion) Tj
+0 -10.5 Td
+(rules.) Tj
+ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 661.39 Td (2. Judge Quickstart & Environment Setup) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 657.39 m 553.28 657.39 l S
+BT /F1 8.0 Tf 0.15 0.15 0.18 rg
+42.0 648.39 Td
+(To evaluate the solution immediately without photographing and uploading 10+ garments, follow these quick steps to run the) Tj
+0 -10.5 Td
+(application with the pre-seeded evaluation wardrobe database:) Tj
+ET
+0.96 0.97 0.98 rg
+42.0 487.99 511.28 136.4 re f
+0.82 0.85 0.88 RG 0.5 w
+42.0 487.99 511.28 136.4 re s
+BT /F3 6.5 Tf 0.12 0.15 0.20 rg
+48.0 616.39 Td
+(# 1. Clone repository or extract submission code archive) Tj
+0 -7.9 Td
+(git clone https://github.com/Jerrywoohoo/Fashion-sense-bot.git) Tj
+0 -7.9 Td
+(cd Fashion-sense-bot) Tj
+0 -7.9 Td
+() Tj
+0 -7.9 Td
+(# 2. Create and activate a clean Python virtual environment \(Python 3.10+ / 3.12\)) Tj
+0 -7.9 Td
+(python3 -m venv .venv && source .venv/bin/activate) Tj
+0 -7.9 Td
+() Tj
+0 -7.9 Td
+(# 3. Install production dependencies) Tj
+0 -7.9 Td
+(pip install -r requirements.txt) Tj
+0 -7.9 Td
+() Tj
+0 -7.9 Td
+(# 4. Configure .env with your credentials \(or use provided Telegram Bot Token\)) Tj
+0 -7.9 Td
+(cp .env.example .env) Tj
+0 -7.9 Td
+(# Fill in: TELEGRAM_BOT_TOKEN \(provided in telegram_bot_info.txt\), AWS credentials) Tj
+0 -7.9 Td
+() Tj
+0 -7.9 Td
+(# 5. Launch the Bot Application) Tj
+0 -7.9 Td
+(python bot.py) Tj
+ET
+BT /F2 9.5 Tf 0.18 0.28 0.45 rg
+42.0 476.99 Td (Evaluation Testing Database \(wardrobe.db\):) Tj ET
+BT /F1 8.0 Tf 0.15 0.15 0.18 rg
+42.0 468.99 Td
+(The project includes a pre-seeded evaluation SQLite database \(data/wardrobe.db\) with verified items across Tops, Bottoms,) Tj
+0 -10.5 Td
+(Outerwear, Footwear, Accessories, and logged OOTD outfits so you can test recommendations immediately.) Tj
+ET
+0.75 0.75 0.78 RG 0.5 w
+42.0 36 m 553.28 36 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+498.28 25 Td (Page 1 of 5) Tj ET
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 25 Td (Official Submission Deliverable -- Agentic AI on Telegram) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595.28 841.89] /Contents 7 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] >> >>
+endobj
+9 0 obj
+<< /Length 5985 >>
+stream
+0.75 0.75 0.78 RG 0.5 w
+42.0 811.89 m 553.28 811.89 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 816.89 Td (AI Stylist & Smart Wardrobe Manager -- Project Documentation & Evaluation Guide) Tj ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 791.89 Td (3. Zero-Friction Judge Testing on Telegram) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 787.89 m 553.28 787.89 l S
+BT /F1 8.0 Tf 0.15 0.15 0.18 rg
+42.0 778.89 Td
+(Follow these simple steps on Telegram to test the full agentic experience in under 2 minutes:) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 767.39 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 765.39 Td
+(Step 1: Open Bot: Start the bot on Telegram by searching @Fashion_sense_bot \(or your configured bot\) and send /start.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 755.1899999999999 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 753.1899999999999 Td
+(Step 2: Enter Judge Pool: Send /admintest and enter evaluation password 'demo123' \(or password set in your .env\) to access the) Tj
+0 -10.2 Td
+(shared evaluation wardrobe.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 732.79 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 730.79 Td
+(Step 3: Browse Wardrobe: Send /wardrobe to inspect cataloged items across Tops, Bottoms, Outerwear, Footwear, and Accessories) Tj
+0 -10.2 Td
+(with badged photo previews and 2-step management.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 710.39 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 708.39 Td
+(Step 4: Request Styling: Send /style dinner date in Tokyo or /style rainy office day in London. The bot retrieves live weather) Tj
+0 -10.2 Td
+(forecasts, DuckDuckGo trend snippets, and compiles an optimal outfit.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 687.99 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 685.99 Td
+(Step 5: Interactive Feedback: Tap 'Item in Laundry' to test rotation cooldowns, or 'More Options' to re-roll combinations) Tj
+0 -10.2 Td
+(based on deterministic balance rules.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 665.59 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 663.59 Td
+(Step 6: Exit Judge Mode: Send /adminlive when finished to return to your isolated private wardrobe session.) Tj
+ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 641.39 Td (4. Available Telegram Commands Reference) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 637.39 m 553.28 637.39 l S
+0.18 0.32 0.52 rg
+42.0 614.89 510.0 13.5 re f
+BT /F2 7.0 Tf 1.0 1.0 1.0 rg
+45.0 618.89 Td (Command) Tj ET
+BT /F2 7.0 Tf 1.0 1.0 1.0 rg
+140.0 618.89 Td (Scope) Tj ET
+BT /F2 7.0 Tf 1.0 1.0 1.0 rg
+215.0 618.89 Td (Description & Usage) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 605.39 Td (/admintest) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 605.39 Td (Evaluation) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 605.39 Td (Switches to shared test wardrobe pre-seeded with items \(Password: demo123\).) Tj ET
+0.97 0.98 0.99 rg
+42.0 587.89 510.0 13.5 re f
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 591.89 Td (/adminlive) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 591.89 Td (Session) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 591.89 Td (Exits judge pool mode and returns to your isolated private wardrobe.) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 578.39 Td (/wardrobe) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 578.39 Td (Inventory) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 578.39 Td (Browse cataloged pieces, badged photo previews, OOTD gallery, and laundry status.) Tj ET
+0.97 0.98 0.99 rg
+42.0 560.89 510.0 13.5 re f
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 564.89 Td (/style [context]) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 564.89 Td (Stylist) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 564.89 Td (Triggers LangGraph styling engine with live weather RAG and web fashion trends.) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 551.39 Td (/profile) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 551.39 Td (Onboarding) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 551.39 Td (7-step interactive wizard capturing body build, proportions, silhouettes, thermal preference.) Tj ET
+0.97 0.98 0.99 rg
+42.0 533.89 510.0 13.5 re f
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 537.89 Td (/laundry) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 537.89 Td (Care Mgt) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 537.89 Td (View dirty laundry hamper and toggle items clean after doing laundry.) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 524.39 Td (/delete [item_id]) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 524.39 Td (Wardrobe) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 524.39 Td (Delete individual items or execute a safe 2-step complete wardrobe reset.) Tj ET
+0.97 0.98 0.99 rg
+42.0 506.89 510.0 13.5 re f
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+45.0 510.89 Td (/cancel) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+140.0 510.89 Td (Control) Tj ET
+BT /F1 6.7 Tf 0.15 0.15 0.18 rg
+215.0 510.89 Td (Aborts any active prompt, intake correction, or conversation flow.) Tj ET
+0.80 0.83 0.88 RG 0.5 w
+42.0 506.89 510.0 121.5 re s
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 490.89 Td (5. End-to-End Agentic Lifecycle) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 486.89 m 553.28 486.89 l S
+0.96 0.97 0.98 rg
+42.0 421.09 511.28 56.8 re f
+0.82 0.85 0.88 RG 0.5 w
+42.0 421.09 511.28 56.8 re s
+BT /F3 6.5 Tf 0.12 0.15 0.20 rg
+48.0 469.89 Td
+(+-------------------+   +-------------------+   +-------------------+   +-------------------+) Tj
+0 -7.8 Td
+(| 1. PHOTO INTAKE   |-->| 2. HITL REVIEW    |-->| 3. WARDROBE MGT   |-->| 4. AGENTIC STYLIST|) Tj
+0 -7.8 Td
+(| - Single & OOTD   |   | - Natural prompt  |   | - Clean 2-step    |   | - Live Weather RAG|) Tj
+0 -7.8 Td
+(| - Multi-piece     |   | - Granular dup    |   | - OOTD Gallery    |   | - DDGS Web Trends |) Tj
+0 -7.8 Td
+(| - Bedrock Vision  |   | - Non-blocking    |   | - Manual Linking  |   | - LangGraph Engine|) Tj
+0 -7.8 Td
+(+-------------------+   +-------------------+   +-------------------+   +-------------------+) Tj
+ET
+0.75 0.75 0.78 RG 0.5 w
+42.0 36 m 553.28 36 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+498.28 25 Td (Page 2 of 5) Tj ET
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 25 Td (Official Submission Deliverable -- Agentic AI on Telegram) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595.28 841.89] /Contents 9 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] >> >>
+endobj
+11 0 obj
+<< /Length 4650 >>
+stream
+0.75 0.75 0.78 RG 0.5 w
+42.0 811.89 m 553.28 811.89 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 816.89 Td (AI Stylist & Smart Wardrobe Manager -- Project Documentation & Evaluation Guide) Tj ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 791.89 Td (6. Detailed Methodology & System Capabilities) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 787.89 m 553.28 787.89 l S
+BT /F2 9.5 Tf 0.18 0.28 0.45 rg
+42.0 772.89 Td (1. Multimodal Vision Intake \(app/extractor.py\):) Tj ET
+0.18 0.42 0.82 rg
+44.0 766.89 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 764.89 Td
+(Single & OOTD Classification: Classifies uploaded photos into single-item photos or full multi-piece Outfit of the Day \(OOTD\)) Tj
+0 -10.2 Td
+(images.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 744.49 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 742.49 Td
+(Rich Pydantic Extraction: Extracts structured attributes: category, sub-category, primary/accent colors, silhouette fit,) Tj
+0 -10.2 Td
+(fabric weight, formality tier \(1-5\), and styling tags.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 722.09 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 720.09 Td
+(Visual Image Badging: Labels photos in memory with high-contrast, labeled visual badges using Pillow for crystal-clear user) Tj
+0 -10.2 Td
+(verification.) Tj
+ET
+BT /F2 9.5 Tf 0.18 0.28 0.45 rg
+42.0 691.69 Td (2. Human-in-the-Loop \(HITL\) & Conservative Duplicate Linking \(app/handlers.py\):) Tj ET
+0.18 0.42 0.82 rg
+44.0 685.69 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 683.69 Td
+(Unverified Staging: Staged in unverified state \(is_verified = 0\) until user confirms or supplies natural-language revisions) Tj
+0 -10.2 Td
+(\(e.g. 'the jacket is oversized charcoal wool'\).) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 663.2900000000001 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 661.2900000000001 Td
+(Non-Blocking Duplicate Selection: Users can toggle duplicate candidates on/off without closing the capture card, keeping item) Tj
+0 -10.2 Td
+(edit buttons accessible before saving.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 640.8900000000001 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 638.8900000000001 Td
+(Dual-Condition Deduplication: Candidates must match both category and primary color hue before 64-bit pHash perceptual hashing) Tj
+0 -10.2 Td
+(and Bedrock LLM identity checks link them.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 618.4900000000001 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 616.4900000000001 Td
+(Prominent Manual Duplicate Link: Tap 'Manual Duplicate Link' anytime on intake cards or directly inside /wardrobe to link) Tj
+0 -10.2 Td
+(pieces across photos.) Tj
+ET
+BT /F2 9.5 Tf 0.18 0.28 0.45 rg
+42.0 588.0900000000001 Td (3. 7-Step Profile Onboarding \(app/profile_flow.py\):) Tj ET
+0.18 0.42 0.82 rg
+44.0 582.0900000000001 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 580.0900000000001 Td
+(Geometry & Thermal Preferences: Captures body build, vertical proportions \(e.g. long torso, broad shoulders\), preferred) Tj
+0 -10.2 Td
+(silhouettes, and thermal preference \(warm/cold\).) Tj
+ET
+BT /F2 9.5 Tf 0.18 0.28 0.45 rg
+42.0 551.6900000000002 Td (4. Contextual Agentic Stylist Graph \(app/stylist_graph.py\):) Tj ET
+0.18 0.42 0.82 rg
+44.0 545.6900000000002 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 543.6900000000002 Td
+(Multi-Source Context RAG: Combines live Open-Meteo weather forecasts, DuckDuckGo fashion trend snippets \(ddgs\), past outfit) Tj
+0 -10.2 Td
+(history, and 48-hour anti-repeat rotation cooldown.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 523.2900000000002 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 521.2900000000002 Td
+(Deterministic Rule Matrix: Enforces color harmony \(monochromatic, complementary, analogous\) and silhouette balance from) Tj
+0 -10.2 Td
+(app/style_matrix.py before LLM reasoning.) Tj
+ET
+BT /F2 9.5 Tf 0.18 0.28 0.45 rg
+42.0 492.8900000000002 Td (5. Wardrobe & OOTD Gallery Management \(/wardrobe, /laundry\):) Tj ET
+0.18 0.42 0.82 rg
+44.0 486.8900000000002 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 484.8900000000002 Td
+(OOTD Gallery: Dedicated section displaying saved outfits, occasion labels, badged previews, and clear distinction between) Tj
+0 -10.2 Td
+(linked items and individual pieces.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 464.49000000000024 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 462.49000000000024 Td
+(Unlinked Item Lifecycle: Deleting an OOTD cleanly removes only unlinked garments while preserving previously existing wardrobe) Tj
+0 -10.2 Td
+(pieces.) Tj
+ET
+0.75 0.75 0.78 RG 0.5 w
+42.0 36 m 553.28 36 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+498.28 25 Td (Page 3 of 5) Tj ET
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 25 Td (Official Submission Deliverable -- Agentic AI on Telegram) Tj ET
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595.28 841.89] /Contents 11 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] >> >>
+endobj
+13 0 obj
+<< /Length 4971 >>
+stream
+0.75 0.75 0.78 RG 0.5 w
+42.0 811.89 m 553.28 811.89 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 816.89 Td (AI Stylist & Smart Wardrobe Manager -- Project Documentation & Evaluation Guide) Tj ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 791.89 Td (7. Technical Architecture & Topology) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 787.89 m 553.28 787.89 l S
+BT /F1 8.0 Tf 0.15 0.15 0.18 rg
+42.0 778.89 Td
+(The solution decouples stateful bot routing and storage \(Google Cloud Platform Compute Engine\) from generative AI compute) Tj
+0 -10.5 Td
+(\(AWS Bedrock\):) Tj
+ET
+0.96 0.97 0.98 rg
+42.0 519.89 511.28 235.0 re f
+0.82 0.85 0.88 RG 0.5 w
+42.0 519.89 511.28 235.0 re s
+BT /F3 6.3 Tf 0.12 0.15 0.20 rg
+48.0 746.89 Td
+(   +-------------------------------------------------------------------------+) Tj
+0 -7.5 Td
+(   |                      Telegram Client UI \(User\)                          |) Tj
+0 -7.5 Td
+(   |               \(Photos, Captions, Interactive Inline Keyboards\)          |) Tj
+0 -7.5 Td
+(   +-----------------------------------+-------------------------------------+) Tj
+0 -7.5 Td
+(                                       | MTProto Polling \(HTTPX Keepalive\)) Tj
+0 -7.5 Td
+(                                       v) Tj
+0 -7.5 Td
+(   +-----------------------------------+-------------------------------------+) Tj
+0 -7.5 Td
+(   |               Bot Application Router \(bot.py\)                           |) Tj
+0 -7.5 Td
+(   |        \(Dual HTTPX Connection Pools, Debounce, Handlers\)                |) Tj
+0 -7.5 Td
+(   +--------------------+--------------------------------+-------------------+) Tj
+0 -7.5 Td
+(                        |                                |) Tj
+0 -7.5 Td
+(         [Intake Flow]  |                                | [Stylist Flow]) Tj
+0 -7.5 Td
+(                        v                                v) Tj
+0 -7.5 Td
+(   +------------------------------+             +------------------------------+) Tj
+0 -7.5 Td
+(   | AWS Bedrock Vision           |             | LangGraph Stylist Engine     |) Tj
+0 -7.5 Td
+(   | \(Amazon Nova Pro / Claude\)   |             | \(Context RAG + Rule FSM\)     |) Tj
+0 -7.5 Td
+(   +--------------+---------------+             +--------------+---------------+) Tj
+0 -7.5 Td
+(                  |                                            |) Tj
+0 -7.5 Td
+(                  v                                            v) Tj
+0 -7.5 Td
+(   +------------------------------+             +------------------------------+) Tj
+0 -7.5 Td
+(   | Dual-Condition Deduplication |             | Live Weather & Trend RAG     |) Tj
+0 -7.5 Td
+(   | \(pHash + Hue + LLM Link\)     |             | \(Open-Meteo + DuckDuckGo RAG\)|) Tj
+0 -7.5 Td
+(   +--------------+---------------+             +--------------+---------------+) Tj
+0 -7.5 Td
+(                  |                                            |) Tj
+0 -7.5 Td
+(                  +----------------------+---------------------+) Tj
+0 -7.5 Td
+(                                         |) Tj
+0 -7.5 Td
+(                                         v) Tj
+0 -7.5 Td
+(   +-------------------------------------+-----------------------------------+) Tj
+0 -7.5 Td
+(   |            SQLite Database & Local Storage \(data/wardrobe.db\)           |) Tj
+0 -7.5 Td
+(   +-------------------------------------------------------------------------+) Tj
+ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 504.89 Td (8. LangGraph Stylist Node State Machine) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 500.89 m 553.28 500.89 l S
+0.96 0.97 0.98 rg
+42.0 367.89 511.28 124.0 re f
+0.82 0.85 0.88 RG 0.5 w
+42.0 367.89 511.28 124.0 re s
+BT /F3 6.3 Tf 0.12 0.15 0.20 rg
+48.0 483.89 Td
+(    [User /style] ---> 1. candidate_fetch_node \(Open-Meteo, DDGS Trends, History, Clean Stock\)) Tj
+0 -7.6 Td
+(                                 ?) Tj
+0 -7.6 Td
+(                                 v) Tj
+0 -7.6 Td
+(                       2. trend_rules_node    \(Color Harmony Wheel, Silhouette Balance, Thermal\)) Tj
+0 -7.6 Td
+(                                 ?) Tj
+0 -7.6 Td
+(                                 v) Tj
+0 -7.6 Td
+(                       3. stylist_llm_node    \(AWS Bedrock Converse Reasoning & Assembly\)) Tj
+0 -7.6 Td
+(                                 ?) Tj
+0 -7.6 Td
+(                                 v) Tj
+0 -7.6 Td
+(                       4. outfit_critique_node \(Inventory Validation, Formality & Cooldown\)) Tj
+0 -7.6 Td
+(                                 ?) Tj
+0 -7.6 Td
+(              +------------------+------------------+) Tj
+0 -7.6 Td
+(              ? \(Pass\)                              ? \(Constraint Violation\)) Tj
+0 -7.6 Td
+(              v                                     v) Tj
+0 -7.6 Td
+(    [Send Badged Photos & Action Keyboards]   [Deterministic Rule Fallback Re-seed]) Tj
+ET
+0.75 0.75 0.78 RG 0.5 w
+42.0 36 m 553.28 36 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+498.28 25 Td (Page 4 of 5) Tj ET
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 25 Td (Official Submission Deliverable -- Agentic AI on Telegram) Tj ET
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595.28 841.89] /Contents 13 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] >> >>
+endobj
+15 0 obj
+<< /Length 9689 >>
+stream
+0.75 0.75 0.78 RG 0.5 w
+42.0 811.89 m 553.28 811.89 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 816.89 Td (AI Stylist & Smart Wardrobe Manager -- Project Documentation & Evaluation Guide) Tj ET
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 791.89 Td (9. Project Directory & File Purpose Map) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 787.89 m 553.28 787.89 l S
+0.18 0.32 0.52 rg
+42.0 765.39 510.0 13.5 re f
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+45.0 769.39 Td (File / Module) Tj ET
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+140.0 769.39 Td (Layer) Tj ET
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+210.0 769.39 Td (Purpose & Architectural Role) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 755.89 Td (bot.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 755.89 Td (Entrypoint) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 755.89 Td (Configures dual HTTPX connection pools, PTB Application, handlers, and resilient polling.) Tj ET
+0.97 0.98 0.99 rg
+42.0 738.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 742.39 Td (app/config.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 742.39 Td (Config) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 742.39 Td (Loads .env credentials, parses Settings dataclass, validates AWS and Telegram keys.) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 728.89 Td (app/database.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 728.89 Td (Persistence) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 728.89 Td (SQLite connection manager, schema migrations, CRUD queries, and wear history logging.) Tj ET
+0.97 0.98 0.99 rg
+42.0 711.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 715.39 Td (app/extractor.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 715.39 Td (Vision / AI) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 715.39 Td (AWS Bedrock Converse API client, vision extraction prompts, 64-bit pHash, badge renderer.) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 701.89 Td (app/handlers.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 701.89 Td (Controller) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 701.89 Td (Telegram commands \(/wardrobe, /style, /laundry, /delete\), intake debouncing, callbacks.) Tj ET
+0.97 0.98 0.99 rg
+42.0 684.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 688.39 Td (app/models.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 688.39 Td (Contracts) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 688.39 Td (Pydantic v2 schemas: ExtractedGarment, UserProfile, OutfitRecommendation.) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 674.89 Td (app/paths.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 674.89 Td (Filesystem) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 674.89 Td (Resolves persistent data/ directories, SQLite DB paths, and image storage paths.) Tj ET
+0.97 0.98 0.99 rg
+42.0 657.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 661.39 Td (app/profile_flow.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 661.39 Td (Wizard) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 661.39 Td (7-step interactive /profile ConversationHandler with fallback command routing.) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 647.89 Td (app/style_matrix.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 647.89 Td (Rule Engine) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 647.89 Td (Deterministic color harmony wheel, silhouette proportion rules, offline fallback stylist.) Tj ET
+0.97 0.98 0.99 rg
+42.0 630.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 634.39 Td (app/stylist_graph.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 634.39 Td (Agent Core) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 634.39 Td (Stateful LangGraph orchestrator executing RAG context -> LLM stylist -> Critique loop.) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 620.89 Td (app/weather.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 620.89 Td (RAG Tool) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 620.89 Td (Open-Meteo REST client retrieving real-time temperature, precipitation, and UV index.) Tj ET
+0.97 0.98 0.99 rg
+42.0 603.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 607.39 Td (app/web_search.py) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 607.39 Td (RAG Tool) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 607.39 Td (DuckDuckGo \(ddgs\) client retrieving live occasion-specific fashion trend snippets.) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 593.89 Td (data/wardrobe.db) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+140.0 593.89 Td (Data) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+210.0 593.89 Td (SQLite database containing pre-seeded demo wardrobe items for judge testing.) Tj ET
+0.80 0.83 0.88 RG 0.5 w
+42.0 589.89 510.0 189.0 re s
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 573.89 Td (10. Tech Stack & Dependencies) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 569.89 m 553.28 569.89 l S
+0.18 0.32 0.52 rg
+42.0 547.39 510.0 13.5 re f
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+45.0 551.39 Td (Layer) Tj ET
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+130.0 551.39 Td (Technology) Tj ET
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+260.0 551.39 Td (Version) Tj ET
+BT /F2 6.8999999999999995 Tf 1.0 1.0 1.0 rg
+335.0 551.39 Td (Purpose) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 537.89 Td (Language) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 537.89 Td (Python) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 537.89 Td (>= 3.10) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 537.89 Td (Core asynchronous runtime) Tj ET
+0.97 0.98 0.99 rg
+42.0 520.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 524.39 Td (Bot Framework) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 524.39 Td (python-telegram-bot) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 524.39 Td (>= 21.0) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 524.39 Td (Async MTProto Telegram API wrapper with polling) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 510.89 Td (LLM / Vision) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 510.89 Td (AWS Bedrock \(Nova / Claude\)) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 510.89 Td (Converse API) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 510.89 Td (Multimodal extraction & style reasoning) Tj ET
+0.97 0.98 0.99 rg
+42.0 493.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 497.39 Td (Agent Orchestration) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 497.39 Td (LangGraph) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 497.39 Td (>= 0.2.0) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 497.39 Td (State machine with RAG & self-critique loop) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 483.89 Td (Data Contracts) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 483.89 Td (Pydantic) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 483.89 Td (>= 2.5.0) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 483.89 Td (Strict JSON schema validation and type safety) Tj ET
+0.97 0.98 0.99 rg
+42.0 466.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 470.39 Td (Database) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 470.39 Td (SQLite 3) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 470.39 Td (Built-in) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 470.39 Td (Local relational storage with auto-migrations) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 456.89 Td (Image Processing) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 456.89 Td (Pillow \(PIL\)) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 456.89 Td (>= 10.0.0) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 456.89 Td (Resizing, 64-bit pHash, and labeled image badges) Tj ET
+0.97 0.98 0.99 rg
+42.0 439.39 510.0 13.5 re f
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 443.39 Td (Web Trends RAG) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 443.39 Td (duckduckgo-search / ddgs) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 443.39 Td (>= 6.0.0) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 443.39 Td (Live occasion & location fashion trend retrieval) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+45.0 429.89 Td (Weather API) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+130.0 429.89 Td (Open-Meteo API) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+260.0 429.89 Td (REST v1) Tj ET
+BT /F1 6.6 Tf 0.15 0.15 0.18 rg
+335.0 429.89 Td (Keyless real-time weather & temperature forecasting) Tj ET
+0.80 0.83 0.88 RG 0.5 w
+42.0 425.89 510.0 135.0 re s
+BT /F2 11 Tf 0.12 0.20 0.40 rg
+42.0 409.89 Td (11. Automated Test Suite \(68 Tests Passing\)) Tj ET
+0.85 0.88 0.92 RG 0.8 w
+42.0 405.89 m 553.28 405.89 l S
+BT /F1 8.0 Tf 0.15 0.15 0.18 rg
+42.0 396.89 Td
+(All modules are validated through an automated test suite executed via 'python -m unittest discover -s . -p "test_*.py"':) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 385.39 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 383.39 Td
+(test_system_resilience.py: Verifies HTTPX polling connection timeouts, profile fallback command routing, and state resets.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 373.19 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 371.19 Td
+(test_admin_pool.py: Verifies admin test pool isolation, password gating, and wardrobe action keyboards.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 360.99 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 358.99 Td
+(test_batch_and_wardrobe.py: Verifies multi-photo batch intake debouncing, 4-word title display caps, and category filtering.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 348.79 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 346.79 Td
+(test_duplicate_detection.py: Verifies 64-bit pHash calculations, hue similarity filters, and dual-condition linking.) Tj
+ET
+0.18 0.42 0.82 rg
+44.0 336.59000000000003 2.5 2.5 re f
+BT /F1 7.6 Tf 0.18 0.18 0.22 rg
+51.0 334.59000000000003 Td
+(test_intake_flow.py: Verifies HITL verification flow, single-item edits, and wardrobe navigation.) Tj
+ET
+0.75 0.75 0.78 RG 0.5 w
+42.0 36 m 553.28 36 l S
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+498.28 25 Td (Page 5 of 5) Tj ET
+BT /F1 7.5 Tf 0.45 0.45 0.50 rg
+42.0 25 Td (Official Submission Deliverable -- Agentic AI on Telegram) Tj ET
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 3 0 R /MediaBox [0 0 595.28 841.89] /Contents 15 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R /F3 6 0 R >> /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] >> >>
+endobj
+xref
+0 17
+0000000000 65535 f 
+0000000015 00000 n 
+0000000080 00000 n 
+0000000126 00000 n 
+0000000211 00000 n 
+0000000308 00000 n 
+0000000410 00000 n 
+0000000505 00000 n 
+0000003803 00000 n 
+0000004001 00000 n 
+0000010038 00000 n 
+0000010237 00000 n 
+0000014940 00000 n 
+0000015140 00000 n 
+0000020164 00000 n 
+0000020364 00000 n 
+0000030106 00000 n 
+trailer
+<< /Size 17 /Root 1 0 R >>
+startxref
+30306
+%%EOF
